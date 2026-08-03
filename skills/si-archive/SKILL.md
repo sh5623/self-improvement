@@ -17,7 +17,7 @@ description: >-
 
 ## 1. 측정 — 예산 대조
 
-데이터 파일(`docs/conventions/CHANGELOG.md`) §라우팅 표의 각 문서에 대해:
+데이터 파일(기본 `docs/conventions/CHANGELOG.md` — 위치가 다르면 si-improve §0 의 탐색 순서로 확인) §라우팅 표의 각 문서에 대해:
 
 ```bash
 wc -l <상시 로드 문서> <경로 룰 파일들…>          # 표의 예산과 대조

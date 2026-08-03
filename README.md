@@ -26,7 +26,7 @@ Three principles:
 /reload-plugins
 ```
 
-Installs at **user scope** by default, so it applies to every session in every project. Use `--scope project` to limit it to one repo, or drop it from that project's `.claude/settings.json` → `enabledPlugins` to turn it off. Update with `/plugin marketplace update self-improvement` → `/reload-plugins`.
+Installs at **user scope** by default, so it applies to every session in every project. Use `--scope project` to limit it to one repo, or drop it from that project's `.claude/settings.json` → `enabledPlugins` to turn it off. Update with `/plugin marketplace update self-improvement` → `/reload-plugins` → then **re-run `/self-improvement:si-init`** in projects you had already set up: an update replaces the tool but not the data file, so the file keeps whatever wording the older template gave it. The re-run compares a version stamp and repairs that wording only — your routing values, index, and log are left alone.
 
 ![How a convention gap is gated and routed into the narrowest layer that fits](docs/assets/loop.svg)
 
@@ -60,11 +60,11 @@ That last line — *self-improvement: 1 item* — is the observable signal. It i
 |---|---|
 | **SessionStart hook** (`hooks/doctrine.md`) | Injects a 6-clause doctrine into **every session** — fix the rule, not just your file · the evidence gate · the end-of-work self-check · the reporting duty. It is re-injected after a compaction, so long sessions don't lose it. |
 | `/self-improvement:si-improve` | The protocol itself: detect → classify → verify → codify → propagate → record. |
-| `/self-improvement:si-init` | Per-project bootstrap (idempotent): detect the documentation landscape → create the data file → wire a 3-line pointer into the always-loaded doc. |
+| `/self-improvement:si-init` | Per-project bootstrap (idempotent): detect the documentation landscape → create the data file → wire a 3-line pointer into the always-loaded doc — including when it registers a system you already had, so the next session inherits the paths instead of re-deriving them. Re-run it after a plugin update to repair version drift. |
 | `/self-improvement:si-archive` | Bloat and dead-rule migration: measure against budgets → demote / merge / retire → migration table → changelog rotation. |
 | `convention-smith` agent | Delegate here when routing or drafting is unclear. READ + DRAFT only — it returns a gate verdict and a minimal diff; the caller applies it. |
 
-**Tool vs. data.** The plugin is the versioned *tool*. What lands in your project is **one data file** (`docs/conventions/CHANGELOG.md` — routing table, budgets, migration table, index, log) plus three lines of pointer. Updating the plugin never touches the history your project has accumulated.
+**Tool vs. data.** The plugin is the versioned *tool*. What lands in your project is **one data file** (`docs/conventions/CHANGELOG.md` — routing table, budgets, migration table, index, log) plus three lines of pointer. Updating the plugin never touches the history your project has accumulated — which is also why the data file carries a version stamp: the boilerplate it was generated from can fall behind the procedure, and `si-init` reconciles exactly that, nothing else.
 
 ## How it works
 
@@ -119,6 +119,9 @@ This is not a design exercise. It generalizes rules that were paid for on a real
 | Rules were written and never checked, so wording that declared a thing but changed no behavior survived | Verify the wording before you commit to it — re-judge the violations you just measured, and for costly rules run a control with no rule at all |
 | Behavioral instructions carried an inline "unless…" clause, which turned the rule into something to negotiate with | Scope by structure, put a genuine exception on its own line as a condition |
 | A prohibition was written for a failure where the output had the wrong shape, which is the form that backfires there | Classify the failure type first, then match the form to it |
+| The record unit was "one improvement", so a day that produced eight of them ended with 21 index rows and no body at all — each block looked like a duplicate of the doc it had just landed in | One unit of work = one log block holding N improvements; one improvement = one index row. The body carries what the landing doc cannot: the trigger, the evidence, the verification |
+| An existing convention system was "registered" by reporting its location, which died with the session; the next session re-ran the same fallback grep, whose first hit was a README and whose third was an archive file | Registration writes the real paths into the always-loaded doc, and the lookup reads that declaration first — then falls back to a grep that requires an index table and excludes archives |
+| After a plugin update the data file still declared the older template's rules, and nothing could tell | A version stamp in the data file plus an `si-init` re-run that reconciles it — generated files get their boilerplate repaired, pre-existing systems get a contradiction report and nothing more |
 
 ## Prerequisites
 
@@ -129,6 +132,8 @@ Claude Code. That is the whole list — there is no build step, no runtime, and 
 If a skill, the doctrine, or the agent falls short, it gets fixed the same way — edit this repo and bump `version` in `.claude-plugin/plugin.json`. The meta-conventions aren't frozen either.
 
 **When the procedure changes, the procedure gets tested.** The three rules added in v0.2.0 (failure type, form matching, effect verification) are the worked example. An isolated fixture project got the same gap scenario, handed to subagents: **five runs before the change reproduced the failure every time, three runs after it passed and converged on the same shape.** Two other candidates were measured the same way and **rejected** — one because the existing doctrine already caught it 3/3, the other because it had no procedure step to wire itself into and so was destined to go stale. A document that demands you verify a rule's wording has no standing if it never verified its own.
+
+v0.3.0 arrived from the opposite direction: the project this was generalized from pushed back while adopting v0.2.0, and each claim was reproduced in a fixture before it was accepted. The fallback lookup really did rank a README first and an archive file above the real one; the old record unit really did produce an index with no body behind it.
 
 The form-matching table and the no-rule control come from the `writing-skills` meta-skill in [obra/superpowers](https://github.com/obra/superpowers), which applies TDD to skill authoring — baseline under pressure, minimal write, close the loopholes. Its head-to-head wording tests showed that prohibitions backfire on wrong-shape failures and that a single exception clause degrades compliance from consistent to noisy; the five baseline runs above reproduced both failures inside this procedure.
 

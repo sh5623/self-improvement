@@ -22,7 +22,7 @@ tools: Read, Grep, Glob, Bash
 ## 절차
 
 ### 0. 데이터 파일 확인
-`docs/conventions/CHANGELOG.md` → 없으면 `grep -ril "CONVENTIONS-CHANGELOG\|자가개선" --include="*.md" docs .claude . | grep -v node_modules | head`.
+① 상시 로드 문서(AGENTS.md/CLAUDE.md)의 자가개선 절에 선언된 경로 → ② `docs/conventions/CHANGELOG.md` → ③ 폴백 `grep -ril "CONVENTIONS-CHANGELOG\|자가개선" --include="*.md" docs .claude . | grep -v node_modules | head` — 후보가 여럿이면 **§색인 표를 가진 파일**을 고르고, 이름·경로에 `archive`/`ARCHIVE` 가 든 파일과 README·프로토콜 설명 문서는 제외.
 **없으면 즉시 반려**: "데이터 파일 없음 — `/self-improvement:si-init` 먼저". 라우팅 표 없이 추측 라우팅 금지.
 
 ### 1. 중복·선례 확인 (먼저)
@@ -52,7 +52,7 @@ tools: Read, Grep, Glob, Bash
 - 체크리스트·완료 기준이 있는 프로젝트면 그 배선 편집도 초안에 포함.
 
 ### 6. 기록 초안
-- changelog 1블록(날짜·계기·변경·위치·검증·커밋/PR — §로그 맨 위 삽입용, 커밋 전이면 커밋/PR 칸은 `미커밋(워킹 트리)`) + **§색인 1줄**(≤120자, 색인도 최신이 위).
+- changelog 블록 초안(날짜·계기·변경·위치·검증·커밋/PR — §로그 맨 위 삽입용. 작업 단위 1개 = 1블록이므로 호출자의 이번 작업 단위에 이미 블록이 있으면 새 블록 대신 그 블록의 항목으로 합류. 본문은 안착 문서에 없는 것 — 계기·증거·경위. 커밋 전이면 커밋/PR 칸은 `미커밋(워킹 트리)`) + **§색인 1줄**(개선 1건당 1줄 · ≤120자 · 색인도 최신이 위).
 - 적용자에게 검산을 남긴다: `grep -c '^### ' docs/conventions/CHANGELOG.md` 가 15 를 넘으면 si-archive 로테이션 실행.
 
 ## 출력 (이 형식 그대로 반환)
