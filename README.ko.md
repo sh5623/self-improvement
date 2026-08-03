@@ -27,6 +27,32 @@
 - 특정 프로젝트에만 켜려면 `--scope project`, 끄려면 그 프로젝트 `.claude/settings.json` 의 `enabledPlugins` 에서 제외한다.
 - 업데이트: `/plugin marketplace update self-improvement` → `/reload-plugins`.
 
+![규약 갭이 게이트를 지나 가장 좁은 층에 안착하고, 넘치면 아래로만 이동한다](docs/assets/loop.svg)
+
+## 실제로 이렇게 보인다
+
+부르지 않는다. 다른 작업을 하고 있는데, 세션이 나가는 길에 규약을 고친다:
+
+```
+$ claude
+> transferStock 부분 커밋 버그 고쳐줘
+
+  ✔ src/orders/OrderService.java:88 — 두 번째 repository 쓰기가 트랜잭션
+    경계 밖에서 돌고 있었다.
+
+  끝내기 전 — 이거 다른 데서도 재발하나?
+    · PaymentService.java:141, SettlementService.java:52 — 같은 형태(grep)
+    · 증거: 운영 로그 + file:line              → 게이트 통과
+    · 린터가 강제할 수 있다 → 산문이 아니다    → 도구 설정 층
+
+  + src/test/java/arch/TransactionBoundaryTest.java   ArchUnit 룰
+  + docs/conventions/CHANGELOG.md                     색인 1줄 + 로그 1블록
+
+자가개선: 1건 — ArchUnit 룰(도구 설정 층) + changelog
+```
+
+마지막 줄이 **관찰 가능한 신호**다. 그 줄이 없으면 종료 자문을 건너뛴 것이고, 되물어 복구할 수 있다.
+
 ## 구성
 
 | 구성물 | 역할 |
@@ -91,12 +117,16 @@
 | 워밍된 캐시 수치로 "성능 해소"를 게시했다가 같은 날 철회 | 콜드 기준으로 잰다 — 워밍된 수치는 하한이지 진실이 아니고, 상대방의 "고쳤다" 회신에도 같은 기준을 적용한다 |
 | 상시 로드 규약 문서가 34KB가 되어 매 세션 비용을 치름 | 층 모델 + 스코프 강등 + 이관표 |
 
+## 요구 사항
+
+Claude Code. 이게 전부다 — 빌드 단계도, 런타임도, 설치할 의존성도 없다. 플러그인은 Markdown + JSON 매니페스트 2개이고, 프로젝트에 만드는 데이터 파일 하나도 Markdown이다.
+
 ## 이 플러그인 자체도 자가개선 대상
 
 스킬·독트린·에이전트가 부족하면 같은 루프로 고친다 — 이 레포를 수정하고 `.claude-plugin/plugin.json` 의 `version` 을 올린다. 메타-규약도 얼어있지 않다.
 
-이슈·PR 환영: <https://github.com/sh5623/self-improvement>
+이슈·PR 환영 — 변경을 어떻게 검증하는지는 [CONTRIBUTING](.github/CONTRIBUTING.md), 행동 규범은 [CODE_OF_CONDUCT](.github/CODE_OF_CONDUCT.md).
 
 ## 라이선스
 
-MIT — [LICENSE](LICENSE)
+[MIT](LICENSE) © 2026 Seungho

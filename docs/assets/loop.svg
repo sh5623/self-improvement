@@ -1,0 +1,60 @@
+<svg width="920" height="392" viewBox="0 0 920 392" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="self-improvement: a convention gap passes an evidence gate, then lands in the narrowest layer that fits and moves downward only, ending in the archive">
+  <rect x="0" y="0" width="920" height="392" fill="#FAF9F6" rx="12"/>
+
+  <text x="460" y="34" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="15" fill="#57534E">detect → classify → verify → codify → propagate → record</text>
+
+  <!-- ── row A: gap → gate → (reject | accept) ── -->
+
+  <rect x="40" y="60" width="168" height="60" rx="10" fill="#FFFFFF" stroke="#D97757" stroke-width="1.5"/>
+  <text x="124" y="84" text-anchor="middle" font-family="ui-sans-serif, system-ui, sans-serif" font-size="14" font-weight="600" fill="#1F2937">convention gap</text>
+  <text x="124" y="103" text-anchor="middle" font-family="ui-sans-serif, system-ui, sans-serif" font-size="10.5" fill="#78716C">what just bit you</text>
+
+  <g stroke="#D97757" stroke-width="2" fill="none"><line x1="208" y1="90" x2="234" y2="90"/></g>
+  <polygon points="246,90 234,84 234,96" fill="#D97757"/>
+
+  <rect x="250" y="54" width="212" height="72" rx="10" fill="#FFFFFF" stroke="#D97757" stroke-width="1.5"/>
+  <text x="356" y="79" text-anchor="middle" font-family="ui-sans-serif, system-ui, sans-serif" font-size="14" font-weight="600" fill="#1F2937">EVIDENCE GATE</text>
+  <text x="356" y="98" text-anchor="middle" font-family="ui-sans-serif, system-ui, sans-serif" font-size="10.5" fill="#78716C">general — 2+ named recurrences</text>
+  <text x="356" y="114" text-anchor="middle" font-family="ui-sans-serif, system-ui, sans-serif" font-size="10.5" fill="#78716C">evidence — measurement · file:line</text>
+
+  <g stroke="#A8A29E" stroke-width="2" fill="none"><line x1="462" y1="90" x2="530" y2="90"/></g>
+  <polygon points="542,90 530,84 530,96" fill="#A8A29E"/>
+  <text x="496" y="80" text-anchor="middle" font-family="ui-sans-serif, system-ui, sans-serif" font-size="12" fill="#A8A29E">✗</text>
+
+  <rect x="546" y="64" width="228" height="52" rx="10" fill="#F5F4F1" stroke="#A8A29E" stroke-width="1.5" stroke-dasharray="4 3"/>
+  <text x="660" y="85" text-anchor="middle" font-family="ui-sans-serif, system-ui, sans-serif" font-size="13" font-weight="600" fill="#57534E">stays local</text>
+  <text x="660" y="103" text-anchor="middle" font-family="ui-sans-serif, system-ui, sans-serif" font-size="10.5" fill="#78716C">one-off, or unverified — not a rule</text>
+
+  <g stroke="#D97757" stroke-width="2" fill="none"><line x1="356" y1="126" x2="356" y2="150"/></g>
+  <polygon points="356,162 350,150 362,150" fill="#D97757"/>
+  <text x="374" y="146" font-family="ui-sans-serif, system-ui, sans-serif" font-size="12" fill="#D97757">✓</text>
+
+  <!-- ── row B: the layer stack ── -->
+
+  <text x="40" y="188" font-family="ui-sans-serif, system-ui, sans-serif" font-size="12.5" font-weight="600" fill="#1F2937">lands in the first layer that fits — and only ever moves down</text>
+
+  <rect x="40" y="200" width="772" height="32" rx="7" fill="#FFFFFF" stroke="#D97757" stroke-width="1.5"/>
+  <text x="56" y="221" font-family="ui-monospace, Menlo, monospace" font-size="11.5" fill="#1F2937">tool config — lint · format · types · CI</text>
+  <text x="796" y="221" text-anchor="end" font-family="ui-sans-serif, system-ui, sans-serif" font-size="10.5" fill="#78716C">if a tool can catch it, it must not be prose</text>
+
+  <rect x="40" y="238" width="772" height="32" rx="7" fill="#FFFFFF" stroke="#D97757" stroke-width="1.5"/>
+  <text x="56" y="259" font-family="ui-monospace, Menlo, monospace" font-size="11.5" fill="#1F2937">path-scoped rules — .claude/rules/*.md</text>
+  <text x="796" y="259" text-anchor="end" font-family="ui-sans-serif, system-ui, sans-serif" font-size="10.5" fill="#78716C">loads only when a matching file is touched</text>
+
+  <rect x="40" y="276" width="772" height="32" rx="7" fill="#FFFFFF" stroke="#D97757" stroke-width="1.5"/>
+  <text x="56" y="297" font-family="ui-monospace, Menlo, monospace" font-size="11.5" fill="#1F2937">task &amp; domain docs — docs/**</text>
+  <text x="796" y="297" text-anchor="end" font-family="ui-sans-serif, system-ui, sans-serif" font-size="10.5" fill="#78716C">read when you do that task</text>
+
+  <rect x="40" y="314" width="772" height="32" rx="7" fill="#FFFFFF" stroke="#D97757" stroke-width="1.5"/>
+  <text x="56" y="335" font-family="ui-monospace, Menlo, monospace" font-size="11.5" fill="#1F2937">always-loaded doc — AGENTS.md · CLAUDE.md</text>
+  <text x="796" y="335" text-anchor="end" font-family="ui-sans-serif, system-ui, sans-serif" font-size="10.5" fill="#78716C">≤ 200 lines · true in every session</text>
+
+  <rect x="40" y="352" width="772" height="32" rx="7" fill="#F5F4F1" stroke="#A8A29E" stroke-width="1.5" stroke-dasharray="4 3"/>
+  <text x="56" y="373" font-family="ui-monospace, Menlo, monospace" font-size="11.5" fill="#57534E">archive — docs/conventions/archive/</text>
+  <text x="796" y="373" text-anchor="end" font-family="ui-sans-serif, system-ui, sans-serif" font-size="10.5" fill="#78716C">never loaded — preserved, not deleted</text>
+
+  <!-- downward-only arrow -->
+  <g stroke="#D97757" stroke-width="2" fill="none"><line x1="848" y1="206" x2="848" y2="350"/></g>
+  <polygon points="848,362 842,350 854,350" fill="#D97757"/>
+  <text x="880" y="290" text-anchor="middle" font-family="ui-sans-serif, system-ui, sans-serif" font-size="10.5" fill="#D97757" transform="rotate(90 880 290)">overflow · retired</text>
+</svg>

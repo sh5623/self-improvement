@@ -28,6 +28,32 @@ Three principles:
 
 Installs at **user scope** by default, so it applies to every session in every project. Use `--scope project` to limit it to one repo, or drop it from that project's `.claude/settings.json` → `enabledPlugins` to turn it off. Update with `/plugin marketplace update self-improvement` → `/reload-plugins`.
 
+![How a convention gap is gated and routed into the narrowest layer that fits](docs/assets/loop.svg)
+
+## What it looks like
+
+You don't invoke anything. You are working on something else, and the session stops to fix the rule on its way out:
+
+```
+$ claude
+> the transferStock partial-commit bug — please fix it
+
+  ✔ src/orders/OrderService.java:88 — the second repository write was running
+    outside the transaction boundary.
+
+  Before finishing — does this recur anywhere else?
+    · PaymentService.java:141, SettlementService.java:52 — same shape (grep)
+    · evidence: production log + file:line          → gate passed
+    · a linter can enforce this, so it is not prose → tool config layer
+
+  + src/test/java/arch/TransactionBoundaryTest.java   ArchUnit rule
+  + docs/conventions/CHANGELOG.md                     index row + log block
+
+자가개선: 1건 — ArchUnit rule (tool config layer) + changelog
+```
+
+That last line — *self-improvement: 1 item* — is the observable signal. It is a literal Korean marker specified by the doctrine, so you will see it verbatim whatever language you work in. **If it is missing, the end-of-work check was skipped**, and you can ask for it.
+
 ## What you get
 
 | Component | Role |
@@ -91,12 +117,16 @@ This is not a design exercise. It generalizes rules that were paid for on a real
 | A performance verdict read off a warmed cache was published, then retracted the same day | Measure cold; a warmed number is a floor, not the truth — and apply the same standard to "we fixed it" from the other side |
 | An always-loaded rule doc reached 34 KB and was paid for on every single session | The layer model, scope demotion, and the migration table |
 
+## Prerequisites
+
+Claude Code. That is the whole list — there is no build step, no runtime, and no dependency to install. The plugin is Markdown plus two JSON manifests, and the one data file it creates in your project is Markdown too.
+
 ## This plugin is subject to its own loop
 
 If a skill, the doctrine, or the agent falls short, it gets fixed the same way — edit this repo and bump `version` in `.claude-plugin/plugin.json`. The meta-conventions aren't frozen either.
 
-Issues and PRs welcome: <https://github.com/sh5623/self-improvement>
+Issues and PRs welcome — see [CONTRIBUTING](.github/CONTRIBUTING.md) for how changes here are tested, and [CODE_OF_CONDUCT](.github/CODE_OF_CONDUCT.md).
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+[MIT](LICENSE) © 2026 Seungho
