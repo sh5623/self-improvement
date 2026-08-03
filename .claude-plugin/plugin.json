@@ -1,7 +1,7 @@
 {
   "name": "self-improvement",
   "description": "When a convention bites you, fix the convention — an evidence-gated repair loop (detect → classify → verify → codify → propagate → record) plus budgets, demotion and archiving that keep rule docs from growing without bound. Stack-agnostic. Skills are written in Korean.",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "author": {
     "name": "Seungho",
     "email": "seungho5623@gmail.com"
