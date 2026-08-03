@@ -116,6 +116,9 @@ This is not a design exercise. It generalizes rules that were paid for on a real
 | Narrowing a rule's scope to "our case only" missed a counterexample in another area | Narrowing a scope needs evidence too, not just widening it |
 | A performance verdict read off a warmed cache was published, then retracted the same day | Measure cold; a warmed number is a floor, not the truth — and apply the same standard to "we fixed it" from the other side |
 | An always-loaded rule doc reached 34 KB and was paid for on every single session | The layer model, scope demotion, and the migration table |
+| Rules were written and never checked, so wording that declared a thing but changed no behavior survived | Verify the wording before you commit to it — re-judge the violations you just measured, and for costly rules run a control with no rule at all |
+| Behavioral instructions carried an inline "unless…" clause, which turned the rule into something to negotiate with | Scope by structure, put a genuine exception on its own line as a condition |
+| A prohibition was written for a failure where the output had the wrong shape, which is the form that backfires there | Classify the failure type first, then match the form to it |
 
 ## Prerequisites
 
@@ -124,6 +127,10 @@ Claude Code. That is the whole list — there is no build step, no runtime, and 
 ## This plugin is subject to its own loop
 
 If a skill, the doctrine, or the agent falls short, it gets fixed the same way — edit this repo and bump `version` in `.claude-plugin/plugin.json`. The meta-conventions aren't frozen either.
+
+**When the procedure changes, the procedure gets tested.** The three rules added in v0.2.0 (failure type, form matching, effect verification) are the worked example. An isolated fixture project got the same gap scenario, handed to subagents: **five runs before the change reproduced the failure every time, three runs after it passed and converged on the same shape.** Two other candidates were measured the same way and **rejected** — one because the existing doctrine already caught it 3/3, the other because it had no procedure step to wire itself into and so was destined to go stale. A document that demands you verify a rule's wording has no standing if it never verified its own.
+
+The form-matching table and the no-rule control come from the `writing-skills` meta-skill in [obra/superpowers](https://github.com/obra/superpowers), which applies TDD to skill authoring — baseline under pressure, minimal write, close the loopholes. Its head-to-head wording tests showed that prohibitions backfire on wrong-shape failures and that a single exception clause degrades compliance from consistent to noisy; the five baseline runs above reproduced both failures inside this procedure.
 
 Issues and PRs welcome — see [CONTRIBUTING](.github/CONTRIBUTING.md) for how changes here are tested, and [CODE_OF_CONDUCT](.github/CODE_OF_CONDUCT.md).
 

@@ -62,12 +62,24 @@ entry, and then to list every point where it had to invent something the text di
 specify. That last list is the deliverable: it is how the current wording was hardened, and
 it is what you should paste into the PR.
 
-Watch for two specific failures:
+Watch for three specific failures:
 
 - The agent **routes a rule into prose that a linter or CI could enforce.** The layer model
   says tool config wins; if the text let prose win, the text is wrong.
 - The agent **codifies a one-off.** The gate exists to reject gaps that recur nowhere else.
   If a one-off got through, the gate wording leaks.
+- The agent **picks a form that fights the failure** — a prohibition where the output had the
+  wrong shape, or an inline "unless…" clause that reopens the rule for negotiation. §4 has a
+  table for this; if the agent skipped it, the wording did not make the choice load-bearing.
+
+**3. A baseline, when you change rule wording.** Adding a rule or rewording an existing one
+needs the run *before* the change, not only after. Give a fresh agent the **unchanged** text
+and the same scenario first. If the baseline does not reproduce the failure you are fixing,
+stop — there is nothing to fix, and the rule you were about to add would cost budget for
+nothing. Two candidate rules were dropped exactly this way (see the README). Then run the
+changed text **three times** and read all three outputs: they should land on the same shape.
+Three different interpretations means the wording is not binding yet, and the fix is a
+different form rather than more words.
 
 If you add an automated check, wire it into this section in the same PR.
 
@@ -85,9 +97,13 @@ If you add an automated check, wire it into this section in the same PR.
   or `Edit` — the caller applies the diff, which is what keeps parallel sessions from
   drifting shared rule files.
 - **The plugin's own rules apply to its source.** When you write a rule here, follow the
-  ones in `si-improve` §4: no unconditional assertions (state the conditions and exceptions),
-  evidence when you *narrow* a rule's scope and not only when you widen it, and any cap or
-  budget must be wired into the procedure step that executes it — never left in a header.
+  ones in `si-improve` §4: match the form to the failure type you classified in §2 (a
+  prohibition aimed at a wrong-shape failure backfires — write the recipe instead), no
+  unconditional assertions **in judgment or detection rules** (state the conditions and
+  exceptions), no inline "unless…" clause in a behavioral instruction (scope it by structure
+  and put a genuine exception on its own line as a condition), evidence when you *narrow* a
+  rule's scope and not only when you widen it, and any cap or budget must be wired into the
+  procedure step that executes it — never left in a header.
 - **Docs**: `README.md` is canonical. `README.ko.md` must be updated in the **same PR**, not
   a follow-up; a mirror that lags is worse than no mirror.
 - **Version**: bump `version` in `.claude-plugin/plugin.json` (semver) when behavior changes.
