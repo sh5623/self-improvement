@@ -1,0 +1,18 @@
+{
+  "$schema": "https://www.schemastore.org/claude-code-marketplace.json",
+  "name": "self-improvement",
+  "description": "규약 자가개선 하네스 — 물린 규약 갭을 규약 자체의 수정으로 되돌리고, 비대해진 규약 문서는 아카이브로 이관한다.",
+  "owner": {
+    "name": "Seungho",
+    "email": "seungho5623@gmail.com"
+  },
+  "plugins": [
+    {
+      "name": "self-improvement",
+      "description": "Conventions that fix themselves — evidence-gated convention repair loop plus a budget/archive system for bloated rule docs. Stack-agnostic (FE/BE/scripts/docs).",
+      "source": "./",
+      "category": "engineering",
+      "tags": ["conventions", "self-improvement", "documentation", "workflow", "harness"]
+    }
+  ]
+}

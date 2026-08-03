@@ -1,0 +1,20 @@
+{
+  "name": "self-improvement",
+  "description": "규약 자가개선 하네스 — 작업 중 물린 규약 갭을 증거 기반으로 규약 자체 수정으로 되돌리고(감지→분류→검증→규약화→전파→기록), 비대해진 규약 문서는 예산·이관·아카이브로 관리. FE/BE 무관 범용.",
+  "version": "0.1.0",
+  "author": {
+    "name": "Seungho",
+    "email": "seungho5623@gmail.com"
+  },
+  "homepage": "https://github.com/sh5623/self-improvement",
+  "repository": "https://github.com/sh5623/self-improvement.git",
+  "license": "MIT",
+  "keywords": [
+    "conventions",
+    "self-improvement",
+    "documentation",
+    "workflow",
+    "harness",
+    "agents-md"
+  ]
+}
