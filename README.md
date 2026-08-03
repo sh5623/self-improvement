@@ -1,6 +1,10 @@
 # self-improvement — conventions that fix themselves
 
-*[한국어 README](README.ko.md)*
+<div align="right">
+  <a href="README.ko.md"><img src="https://img.shields.io/badge/lang-한국어-lightgrey?style=flat-square" alt="한국어"/></a>
+  <a href="README.md"><img src="https://img.shields.io/badge/lang-English-blue?style=flat-square" alt="English"/></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green?style=flat-square" alt="MIT License"/></a>
+</div>
 
 A Claude Code plugin that turns "I just got bitten by a missing or wrong convention" into a fix of **the convention itself**, inside the same unit of work — instead of a workaround that only helps the file you happened to be in.
 

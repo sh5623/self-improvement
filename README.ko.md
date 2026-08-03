@@ -1,6 +1,10 @@
 # self-improvement — 규약 자가개선 하네스
 
-*[English README](README.md)*
+<div align="right">
+  <a href="README.ko.md"><img src="https://img.shields.io/badge/lang-한국어-blue?style=flat-square" alt="한국어"/></a>
+  <a href="README.md"><img src="https://img.shields.io/badge/lang-English-lightgrey?style=flat-square" alt="English"/></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green?style=flat-square" alt="MIT License"/></a>
+</div>
 
 작업 중 규약·문서·절차에 물렸을 때 그 자리만 우회하지 않고 **규약 자체를 고치게 만드는** Claude Code 플러그인.
 어떤 프로젝트(FE·BE·스크립트·문서)에도 설치해 쓸 수 있다 — 절차는 도메인을 모르고, 프로젝트의 문서 지형은 설치 시 탐지해서 기록한다.
