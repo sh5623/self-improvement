@@ -26,6 +26,8 @@ Three principles:
 /reload-plugins
 ```
 
+> Also using [fe-rail](https://github.com/sh5623/fe-rail)? Install both from one marketplace: [`sh5623/guardrail`](https://github.com/sh5623/guardrail).
+
 Installs at **user scope** by default, so it applies to every session in every project. Use `--scope project` to limit it to one repo, or drop it from that project's `.claude/settings.json` → `enabledPlugins` to turn it off. Update with `/plugin marketplace update self-improvement` → `/reload-plugins` → then **re-run `/self-improvement:si-init`** in projects you had already set up: an update replaces the tool but not the data file, so the file keeps whatever wording the older template gave it. The re-run compares a version stamp and repairs that wording only — your routing values, index, and log are left alone.
 
 ![How a convention gap is gated and routed into the narrowest layer that fits](docs/assets/loop.svg)

@@ -23,6 +23,8 @@
 /reload-plugins
 ```
 
+> [fe-rail](https://github.com/sh5623/fe-rail)도 같이 쓴다면, 마켓 하나로 두 개 다 설치: [`sh5623/guardrail`](https://github.com/sh5623/guardrail).
+
 - 설치는 기본 **user 스코프** — 한 번 설치하면 **모든 프로젝트의 모든 세션**에 적용된다.
 - 특정 프로젝트에만 켜려면 `--scope project`, 끄려면 그 프로젝트 `.claude/settings.json` 의 `enabledPlugins` 에서 제외한다.
 - 업데이트: `/plugin marketplace update self-improvement` → `/reload-plugins` → **이미 셋업한 프로젝트에서 `/self-improvement:si-init` 재실행**. 업데이트는 도구만 바꾸고 데이터 파일은 옛 템플릿 문구를 그대로 들고 있다 — 재실행이 버전 스탬프를 대조해 그 문구만 보수한다(라우팅 표 값·색인·로그는 불변).
