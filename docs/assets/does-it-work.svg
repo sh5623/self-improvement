@@ -1,5 +1,5 @@
-<svg width="920" height="330" viewBox="0 0 920 330" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Fixture test of the v0.2.0 procedure change: five runs before reproduced the failure every time, three runs after passed and converged on the same shape, and two further candidate rules were rejected by the same method">
-  <rect x="0" y="0" width="920" height="330" fill="#FAF9F6" rx="12"/>
+<svg width="920" height="348" viewBox="0 0 920 348" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Fixture test of the v0.2.0 procedure change: five runs before reproduced the failure every time, three runs after passed and converged on the same shape, and two further candidate rules were rejected by the same method">
+  <rect x="0" y="0" width="920" height="348" fill="#FAF9F6" rx="12"/>
 
   <text x="40" y="36" font-family="ui-sans-serif, system-ui, sans-serif" font-size="15" font-weight="600" fill="#1F2937">The procedure was tested the way it tells you to test a rule</text>
   <text x="40" y="56" font-family="ui-monospace, Menlo, monospace" font-size="11" fill="#78716C">v0.2.0 · one fixture project · same gap scenario handed to subagents</text>
@@ -37,7 +37,8 @@
   <text x="510" y="213" font-family="ui-sans-serif, system-ui, sans-serif" font-size="11.5" fill="#57534E">Agreement is the signal the wording binds.</text>
 
   <!-- rejected band -->
-  <rect x="40" y="244" width="840" height="62" rx="10" fill="#F5F4F1" stroke="#A8A29E" stroke-width="1.5" stroke-dasharray="4 3"/>
+  <rect x="40" y="244" width="840" height="80" rx="10" fill="#F5F4F1" stroke="#A8A29E" stroke-width="1.5" stroke-dasharray="4 3"/>
   <text x="60" y="268" font-family="ui-sans-serif, system-ui, sans-serif" font-size="12.5" font-weight="600" fill="#57534E">Two more candidate rules went through the same method and were rejected</text>
-  <text x="60" y="291" font-family="ui-sans-serif, system-ui, sans-serif" font-size="11" fill="#78716C">One because the existing doctrine already caught it 3/3, so the rule was redundant. One because it had no procedure step to wire itself into, so it was destined to go stale.</text>
+  <text x="60" y="290" font-family="ui-sans-serif, system-ui, sans-serif" font-size="11" fill="#78716C">One because the existing doctrine already caught it 3/3, so the rule was redundant.</text>
+  <text x="60" y="308" font-family="ui-sans-serif, system-ui, sans-serif" font-size="11" fill="#78716C">One because it had no procedure step to wire itself into, so it was destined to go stale.</text>
 </svg>

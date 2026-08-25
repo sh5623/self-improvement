@@ -134,3 +134,24 @@ Open an issue and include:
 
 This project follows the [Contributor Covenant](CODE_OF_CONDUCT.md). By participating you
 agree to abide by it.
+
+## Editing the diagrams
+
+The SVGs in `docs/assets/` are hand-authored, and SVG `<text>` does not wrap. A line that outgrows
+its container is not an error: it renders clipped at the viewBox edge and looks fine in a diff.
+
+**Render before you commit a diagram change.** Do not estimate the width, and do not trust a preview
+that scales the image, because that is how a clipped line survived review here once already:
+
+```bash
+"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" \
+  --headless --disable-gpu --hide-scrollbars \
+  --window-size=920,348 \
+  --screenshot=/tmp/out.png \
+  "file://$PWD/docs/assets/does-it-work.svg"
+```
+
+Match `--window-size` to that file's `viewBox`, then look at the PNG. If a line does not fit, split
+it into two `<text>` elements and grow the container plus the `viewBox` height to match. Keep about
+8px of clearance from the right edge.
+
