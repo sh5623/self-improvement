@@ -1,67 +1,96 @@
 ---
 name: si-archive
 description: >-
-  규약 문서가 예산(줄 수·블록 수)을 넘었거나 사문화·중복 조항이 쌓였을 때 사용 — "규약 문서가 길다"·
-  "컨벤션 정리"·"아카이브 패스" 요청 시, si-improve §6 검산에서 로그 캡(15블록) 초과가 나왔을 때,
-  상시 로드 문서가 비대해져 세션 컨텍스트를 누를 때. Do NOT load for: 개별 규약의 신설·정정(si-improve
-  소관), 최초 세팅(si-init 소관).
+  Use when a convention document has gone over budget (line count or block count), or when dead and
+  duplicated clauses have piled up. Triggers include "the convention doc is too long", "clean up the
+  conventions", "do an archive pass", the si-improve section 6 check reporting the log cap (15
+  blocks) exceeded, and an always-loaded doc growing large enough to weigh on session context. Do
+  NOT load for: adding or correcting an individual rule (si-improve owns that), or first-time setup
+  (si-init owns that).
 ---
 
-# si-archive — 규약 비대·사문화의 이관 시스템
+# si-archive — the demotion and archiving system for bloated or dead conventions
 
-## 원칙
+## Principles
 
-- **이동 방향은 아래로만**: 상시 로드 문서 → 경로 룰/태스크 문서(스코프 강등) · 사문화 → `<아카이브>`(로드 안 됨). **아카이브는 삭제가 아니다** — 원문·사유·일자를 보존해 "의도적 제거"와 "누락"이 구분되게 한다.
-- **이동 1건 = §이관표 1행.** 원문서에는 개별 포인터를 남발하지 않는다 — 여러 조항이 나갔으면 원문서 상단에 "이관 내역: `<데이터파일>` §이관표" 한 줄이면 충분하다.
-- **§색인·§이관표는 절대 아카이브로 보내지 않는다**(전 기간 헤드 유지). 이것이 "중복 확인은 한 파일 훑기로 끝난다"는 si-improve §3 의 전제다.
+- **Movement is downward only**: always-loaded doc → path-scoped rule or task doc (scope demotion);
+  dead → `<archive>` (never loaded). **Archiving is not deletion.** Preserve the original text, the
+  reason, and the date, so "removed on purpose" stays distinguishable from "dropped by accident".
+- **One move = one row in the §migration table.** Do not scatter individual pointers through the
+  source document. If several clauses left, one line at the top of that document saying
+  "migrations: `<datafile>` §migration table" is enough.
+- **Never send the §index or the §migration table to the archive.** They stay in the head for the
+  entire history. That is the premise behind si-improve §3's claim that a duplication check is one
+  file skim.
 
-## 0. 경로 확정 — 이하 명령을 치환할 두 값
+## 0. Resolve the paths — the two values every command below substitutes
 
-si-improve §0 의 탐색 순서로 찾는다(① 상시 로드 문서의 자가개선 절에 선언된 경로 → ② `docs/conventions/CHANGELOG.md` → ③ 폴백 grep, **§색인 보유 파일**을 고르고 `archive`/`ARCHIVE`·README 제외). 이하 명령의 두 값은 그 결과로 치환한다 — **기본 경로를 그대로 타이핑하지 않는다**(등록된 기존 시스템은 경로가 다르고, 없는 파일에 대한 측정은 "예산 내"로 오판된다).
+Find them with si-improve §0's search order (① the path declared in the always-loaded doc's
+self-improvement section → ② `docs/conventions/CHANGELOG.md` → ③ fallback grep, picking **the file
+that has an §index**, excluding `archive`/`ARCHIVE` and READMEs). Substitute the result into every
+command below. **Do not type the default paths verbatim**: a project with a registered pre-existing
+system has different paths, and measuring a file that does not exist reads as "within budget".
 
-- `<데이터파일>` = 찾은 데이터 파일. `ls <데이터파일>` 로 실재를 확인한 뒤 진행한다.
-- `<아카이브>` = 선언에 아카이브 경로가 있으면 그것, 없으면 `<데이터파일>` 이 있는 디렉토리의 `archive/`(없으면 이 스킬이 생성).
+- `<datafile>` = the data file you found. Confirm it exists with `ls <datafile>` before proceeding.
+- `<archive>` = the archive path from the declaration if it names one, otherwise `archive/` in the
+  directory holding `<datafile>` (this skill creates it if missing).
 
-## 1. 측정 — 예산 대조
+## 1. Measure — compare against the budgets
 
-`<데이터파일>` §라우팅 표의 각 문서에 대해:
+For each document in `<datafile>`'s §routing table:
 
 ```bash
-wc -l <상시 로드 문서> <경로 룰 파일들…>          # 표의 예산과 대조
-grep -c '^### ' <데이터파일>                        # 로그 본문 블록 수 (캡 15)
+wc -l <always-loaded doc> <path-scoped rule files…>   # compare against the budgets in the table
+grep -c '^### ' <datafile>                            # log body blocks (cap 15)
 ```
 
-전부 예산 내면 **종료** — "정리 불필요"도 유효한 결과다(억지 이관 금지). 초과분만 §2 로.
+If everything is within budget, **stop**. "No cleanup needed" is a valid result, and forcing a
+migration is not an improvement. Take only what is over budget to §2.
 
-## 2. 초과 문서의 조항 분류 (조항 단위)
+## 2. Classify the clauses in an over-budget document (clause by clause)
 
-| 판정 | 기준 | 처치 |
+| Verdict | Criterion | Treatment |
 |---|---|---|
-| **강등** | 특정 경로·특정 작업에서만 참 | 경로 스코프 룰(`paths:` 부여) 또는 태스크 문서로 이동 |
-| **병합** | 같은 내용이 두 곳 이상에 | 정본 한 곳 지정, 나머지 삭제 + 이관표 |
-| **사문화** | 대상 코드·절차 소멸 / 참조 0 / 도구가 이제 강제 | `<아카이브>/YYYY-<slug>.md` 로 이동 + 사유 |
-| **유지** | 모든 세션에서 참 | 그대로 |
+| **Demote** | True only for certain paths or certain tasks | Move to a path-scoped rule (give it `paths:`) or a task doc |
+| **Merge** | The same content lives in two or more places | Pick one canonical home, delete the rest, add a migration row |
+| **Dead** | The target code or procedure is gone / zero references / a tool now enforces it | Move to `<archive>/YYYY-<slug>.md` with the reason |
+| **Keep** | True in every session | Leave it |
 
-**사문화 판정에도 증거가 필요하다**(배제 판정도 근거 — si-improve §4 와 같은 원칙): `grep -rn "<규칙 키워드>" .` 로 참조 0 확인 · 대상 파일/절차 부재 확인 · 대체한 도구 룰 존재 확인. "안 쓰는 것 같다"는 판정이 아니다.
+**A dead verdict needs evidence too** (an exclusion is a judgment, same principle as si-improve §4):
+confirm zero references with `grep -rn "<rule keyword>" .`, confirm the target file or procedure is
+absent, confirm the replacing tool rule exists. "I don't think we use this" is not a verdict.
 
-## 3. 실행
+## 3. Execute
 
-1. 조항을 새 위치로 이동한다(문체는 대상 파일에 맞춤). 경로 룰 신설 시 `paths:` frontmatter 를 부여한다.
-2. `<데이터파일>` §이관표에 1행: `| 일자 | 원위치 §조항 | 새 위치 | 사유(강등/병합/사문화) |`.
-3. 원문서에서 그 조항을 지운다(포인터 남발 금지 — 원칙 참조).
-4. **인용 무결성**: `grep -rn "<옛 섹션명·규칙명>" --include="*.md" .` 로 인용처를 찾아 갱신하거나, 이관표가 커버함을 확인한다. 끊긴 인용을 남기지 않는다.
+1. Move the clause to its new home, matching that file's voice. When creating a new path-scoped rule,
+   give it `paths:` frontmatter.
+2. Add one row to `<datafile>`'s §migration table:
+   `| date | original location §clause | new location | reason (demote/merge/dead) |`.
+3. Delete the clause from the source document (no scattered pointers, per the principles above).
+4. **Citation integrity**: run `grep -rn "<old section or rule name>" --include="*.md" .` to find
+   citations and either update them or confirm the migration table covers them. Never leave a
+   dangling citation.
 
-## 4. changelog 로테이션 — 본문만, 색인은 남긴다
+## 4. Changelog rotation — bodies only, the index stays
 
-로그 블록 수 > 15 면: 오래된 본문 블록을 넘친 만큼 `<아카이브>/CHANGELOG-ARCHIVE.md` **맨 위**로 이동(파일 없으면 생성). §색인 줄과 §이관표는 헤드 파일(`<데이터파일>`)에 그대로 둔다. 이동 후 검산 재실행으로 ≤15 확인.
+If log blocks > 15, move the oldest bodies (as many as the overflow) to the **top** of
+`<archive>/CHANGELOG-ARCHIVE.md` (create it if missing). The §index rows and the §migration table
+stay in the head file (`<datafile>`). Re-run the check afterwards to confirm ≤15.
 
-## 5. 검증·보고
+## 5. Verify and report
 
-- 재측정(§1 명령) — 전 문서 예산 내 확인.
-- 이동 조항 키워드 최종 grep — 끊긴 인용 0 확인.
-- 보고: **강등 N · 병합 N · 사문화 N · 로테이션 N블록** + 이관표 위치. 이 패스 중 규약 갭을 발견했으면 si-improve 로 처리하고 "자가개선: N건/해당 없음" 라인을 포함한다.
+- Re-measure (the §1 commands) and confirm every document is within budget.
+- Final grep on the moved clauses' keywords to confirm zero dangling citations.
+- Report: **demoted N · merged N · dead N · rotated N blocks**, plus where the migration table is.
+  If this pass surfaced a convention gap, handle it through si-improve and include the
+  "self-improvement: N items / none" line.
 
-## 실증 배경 — 왜 이 모양인가
+## Why it has this shape — the incidents behind it
 
-- 캡이 파일 헤더에만 적혀 있고 어느 절차에도 배선되지 않아 로그가 **42블록·949줄**까지 자란 뒤에야 발견된 사고 → "기록하는 사람이 그 자리에서 검산·로테이션"(si-improve §6)과 이 스킬의 분리 구조가 나왔다.
-- 상시 로드 문서 **34KB** 가 매 세션 로드되던 것을 경로 스코프 룰 5개로 재편해 해소 → "스코프 강등"이 1순위 처치인 이유. 재편 때 옛 위치를 인용하던 문서들은 **이관표 하나**로 커버했다 — 개별 포인터 수십 개보다 낫다.
+- A cap written only in a file header, wired into no procedure, let a log grow to **42 blocks and 949
+  lines** before anyone noticed. That produced both si-improve §6's "whoever records it runs the
+  check and the rotation on the spot" and the separation between that skill and this one.
+- An always-loaded doc of **34 KB** was being loaded every session until it was reorganized into five
+  path-scoped rules. That is why scope demotion is the first treatment to reach for. During the
+  reorganization, documents citing the old locations were covered by **a single migration table**,
+  which beats dozens of individual pointers.

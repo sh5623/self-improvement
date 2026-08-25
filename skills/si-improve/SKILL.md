@@ -1,134 +1,225 @@
 ---
 name: si-improve
 description: >-
-  규약·문서·절차가 없거나, 틀렸거나, 모호해서 작업 중 손해를 봤고 그 갭이 다른 파일·기능·작업에서
-  재발할 것 같을 때 사용. 작업 종료 자문("이번에 물린 것 중 재발할 게 있나?")에서 갭이 나왔을 때,
-  "자가개선"·"규약 고쳐줘"·"컨벤션 갭" 요청 시에도. Do NOT load for: 일회성 실수, 코드 버그 수정
-  자체, 규약 문서 비대 정리(si-archive 소관), 시스템 미설치 프로젝트의 최초 세팅(si-init 소관).
+  Use when a convention, document, or procedure was missing, wrong, or ambiguous and it cost you
+  time during the work, and that gap looks likely to recur in other files, features, or tasks.
+  Also use when the end-of-work check ("of what bit me, what will recur?") surfaces a gap, and on
+  requests like "self-improvement", "fix the convention", "we have a convention gap". Do NOT load
+  for: one-off mistakes, fixing the code bug itself, trimming bloated convention docs (si-archive
+  owns that), or first-time setup in a project without the system (si-init owns that).
 ---
 
-# si-improve — 자가개선 프로토콜: 감지→분류→검증→규약화→전파→기록
+# si-improve — the self-improvement protocol: detect → classify → verify → codify → propagate → record
 
-## 원칙
+## Principles
 
-- **규약은 얼어있지 않다.** 물린 지점만 우회하지 말고 규약을 고친다 — 스스로, 같은 작업 단위 안에서.
-- 규약 문서 수정에 사용자 승인 불요. 커밋은 프로젝트 git 규칙대로.
-- 이 절차는 도메인을 모른다 — FE/BE/스크립트/문서 프로젝트 어디서나 동일하다. 아래 예시는 예시일 뿐, 절차의 일부가 아니다.
+- **Conventions are not frozen.** Do not route around the spot that bit you — fix the convention,
+  on your own, inside the same unit of work.
+- Editing convention docs needs no user approval. Commits follow the project's git rules.
+- This procedure does not know your domain — it is identical in frontend, backend, scripting, and
+  documentation projects. The examples below are examples, not part of the procedure.
 
-## 0. 데이터 파일 찾기
+## 0. Find the data file
 
-위에서부터 처음 걸리는 것이 데이터 파일이다:
+The first of these that matches is the data file:
 
-1. **상시 로드 문서(AGENTS.md/CLAUDE.md)의 자가개선 절에 선언된 경로** — 있으면 그 선언이 정답(si-init §4 가 배선한다. 기존 시스템 등록 프로젝트는 이 선언이 유일한 전달 경로다).
+1. **The path declared in the self-improvement section of the always-loaded doc** (`AGENTS.md` /
+   `CLAUDE.md`) — if present, that declaration is authoritative (si-init §4 wires it; for projects
+   with a pre-existing system registered, it is the only channel that carries it forward).
 2. `docs/conventions/CHANGELOG.md`.
-3. 폴백 grep: `grep -ril "CONVENTIONS-CHANGELOG\|자가개선" --include="*.md" docs .claude . 2>/dev/null | grep -v node_modules | head` — 후보가 여럿이면 **§색인 표를 가진 파일**을 고르고, 이름·경로에 `archive`/`ARCHIVE` 가 든 파일은 제외한다(아카이브에 쓰면 과거 로그 위에 새 블록이 쌓인다). README·프로토콜 설명 문서는 데이터 파일이 아니다.
-4. 전부 실패 → **STOP: `/self-improvement:si-init` 먼저 실행**(기존 유사 시스템이 있으면 init 이 그것을 등록·배선한다).
+3. Fallback grep:
+   `grep -ril "CONVENTIONS-CHANGELOG\|self-improvement\|자가개선" --include="*.md" docs .claude . 2>/dev/null | grep -v node_modules | head`
+   — with several candidates, pick **the file that has an §index table**, and exclude any file with
+   `archive`/`ARCHIVE` in its name or path (writing there stacks new blocks on top of old logs).
+   READMEs and protocol descriptions are not data files. (The pattern includes the legacy Korean
+   term on purpose — installations predating v0.5.0 wrote it into their always-loaded docs.)
+4. All of them fail → **STOP: run `/self-improvement:si-init` first** (if a similar system exists,
+   init registers and wires it).
 
-이하 절차의 모든 명령은 아래 두 값으로 **치환해서** 실행한다 — 기본 경로를 그대로 타이핑하면 등록된 기존 시스템에서는 없는 파일을 읽는다(없는 파일 grep 은 0건으로 조용히 통과 → 중복 규약이 들어가고, 로테이션 검산은 헛돈다):
+**Substitute these two values into every command below** — typing the default paths verbatim reads
+files that do not exist in a project with a registered pre-existing system (a grep against a missing
+file returns 0 hits and passes silently → a duplicate convention lands, and the rotation check
+measures nothing):
 
-- `<데이터파일>` = 위에서 찾은 그 파일.
-- `<아카이브>` = 1번 선언에 아카이브 경로가 있으면 그것, 없으면 `<데이터파일>` 이 있는 디렉토리의 `archive/`(첫 로테이션 때 생성된다).
+- `<datafile>` = the file you found above.
+- `<archive>` = the archive path from declaration 1 if it names one, otherwise `archive/` in the
+  directory holding `<datafile>` (created on the first rotation).
 
-## 1. 감지 — 규약화할 가치가 있나 (게이트)
+## 1. Detect — is it worth codifying? (the gate)
 
-**둘 다** 참일 때만 규약화한다:
+Codify only when **both** are true:
 
-- **일반성**: 재발 지점을 **실명으로 2개 이상** 댈 수 있다(파일·기능·작업 이름). 못 대면 → 그 작업의 로컬 문서(스펙·모듈 README 등)에만 남기고 종료. 로컬 문서가 아직 없으면 그 대상 옆의 **기존 문서화 패턴을 따라** 만든다(새 패턴 발명 금지).
-- **증거**: 측정값·실행 로그·소스 file:line·재현 절차 중 하나 이상. 없으면 → 검증부터 하거나 `확인 필요` 로 보류. **추측 규약화 금지.**
+- **Generality**: you can **name two or more** recurrence sites (files, features, tasks). If you
+  cannot → record it in that task's local doc (spec, module README) and stop. If no local doc exists
+  yet, create one **following the documentation pattern already used next to that target** — do not
+  invent a new one.
+- **Evidence**: at least one of a measurement, an execution log, a source `file:line`, or a
+  reproduction. Without it → verify first, or park it as `needs verification`. **Never codify a guess.**
 
-| 규약화(전역) | 로컬(그 작업 문서만) |
+| Codify (global) | Local (that task's doc only) |
 |---|---|
-| "외부 API 성능 판정은 한 번도 안 쓴 캐시 키로 한다" — 모든 연동 작업에서 재발 | "이 목록 기본 정렬은 등록일 desc" — 이 기능의 정책 |
-| "테스트가 핸들을 잃고 우회 경로로 갈아타면 그것이 결함 신호" — 모든 리팩토링에서 재발 | "이 배치 job 은 새벽 4시 고정" — 이 job 특이사항 |
+| "Judge external API performance with a cache key that has never been used" — recurs in every integration | "This list defaults to sort by created-at desc" — this feature's policy |
+| "A test losing its handle and switching to a workaround path is a defect signal" — recurs in every refactor | "This batch job is pinned to 04:00" — this job's quirk |
 
-## 2. 분류 — 갭 유형
+## 2. Classify — the type of gap
 
-신설 / 기존 규약 **정정** / 기존 규약 **명확화**(적용 범위 한정·조건 분기 추가) / **사문화 제거**(→ si-archive 절차 준용) / **반복 분석·검증 작업**(→ `.claude/agents/<name>.md` 신설 — 새 에이전트는 다음 세션부터 인식됨을 기록에 명시).
+New / **correction** of an existing rule / **clarification** of an existing rule (narrowing scope,
+adding a conditional) / **removal of a dead rule** (→ follow the si-archive procedure) / **a
+repeatable analysis or verification task** (→ create `.claude/agents/<name>.md`; note in the record
+that a new agent is recognized from the next session onward).
 
-**실패 유형도 같이 판정한다** — 이것이 §4 의 문장 형태를 결정한다. 한 유형에 듣는 형태가 다른 유형에서는 역효과다.
+**Classify the failure type as well** — it decides the sentence form in §4. The form that works on
+one type measurably backfires on another.
 
-| 실패 유형 | 무엇이 일어났나 |
+| Failure type | What happened |
 |---|---|
-| 규율 위반 | 규칙을 알면서 압박(시간·매몰비용·권위)에 밀려 건너뜀 |
-| 산출물 형태 | 규칙은 따랐는데 산출물 모양이 틀림 — 비대·순서 뒤바뀜·핵심 매몰 |
-| 요소 누락 | 이미 만드는 산출물에서 한 칸을 빠뜨림 |
-| 조건 분기 | 상황에 따라 달라야 하는데 한 가지로 굳어 있음 |
+| Discipline violation | They knew the rule and skipped it under pressure (time, sunk cost, authority) |
+| Wrong output shape | The rule was followed but the output came out wrong — bloated, out of order, the point buried |
+| Missing element | One slot was left out of something they already produce |
+| Should be conditional | Behavior should depend on the situation but is frozen into one branch |
 
-## 3. 검증 — 쓰기 전에 증명한다
+## 3. Verify — prove it before you write it
 
-- **중복**: 데이터 파일 **§색인만** 훑는다(전문 통독 금지 — 색인이 전 기간을 덮는다). 이어 키워드 grep 은 헤드·아카이브 함께: `grep -n "<키워드>" <데이터파일> <아카이브>/*.md 2>/dev/null`(§0 의 값으로 치환 — 파일이 없어 0건이 나온 것과 진짜 0건을 구분하려면 `ls <데이터파일>` 로 실재를 먼저 확인한다). 이미 있으면 → 보강/명확화로 재분류하거나 종료.
-- **모순**: 라우팅 표의 각 홈에서 인접 규칙을 grep. 충돌하면 **새 규칙 추가 금지** — 한 번의 편집으로 두 규칙을 화해시킨다.
-- **도구 우선**: linter·formatter·type checker·테스트·CI 가 강제할 수 있으면 문서가 아니라 **도구 설정**에 넣는다(FE: biome/eslint·tsc 류 · BE: checkstyle/ktlint/ruff/mypy/ArchUnit 류 · 공통: CI 게이트). 문서 규약은 도구가 못 잡는 판단만 담는다. 강제 가능성이 불확실하면 **룰 초안 PoC 1회**로 판정한다 — 기존 위반처를 검출해내면 도구 층 확정, 표현 불가면 다음 층으로 내려가되 `도구 강제 후보` 를 병기. 도구가 일부만 잡으면 잡는 부분은 도구에, 못 잡는 판단만 문서에 쓴다(같은 내용 이중 서술 금지).
-- **동결 게이트**: 프로젝트가 frozen 으로 선언한 값·산출물이면 규약화하지 말고 에스컬레이션(보고)만.
-- **증거의 함정 2개** (실증):
-  - **워밍/캐시 편향** — 반복 실행으로 좋아진 수치는 하한이지 진실이 아니다. 성능·"고쳐졌다" 판정은 첫 실행·콜드 상태 기준으로 하고, 수치에 "언제 쟀는지 + 몇 번째 실행인지"를 같이 적는다. 상대방(백엔드/FE)의 "고쳤다" 회신에도 그대로 적용한다.
-  - **선언 ≠ 적용** — 스펙·문서·설정에 있다고 동작한다는 뜻이 아니다. 실측 한 번이 판정을 바꾼다(배선 전에 실물을 한 번 확인).
+- **Duplication**: skim **the §index only** (never read the whole file — the index covers the entire
+  history). Then grep keywords across head and archive together:
+  `grep -n "<keyword>" <datafile> <archive>/*.md 2>/dev/null` (substituted per §0 — confirm the file
+  exists with `ls <datafile>` first, so "0 hits because the file is missing" is distinguishable from
+  a real 0). Already there → reclassify as a reinforcement or clarification, or stop.
+- **Contradiction**: grep the neighbouring rules in each home listed in the routing table. On a
+  conflict, **do not add a new rule** — reconcile both in a single edit.
+- **Tools first**: if a linter, formatter, type checker, test, or CI can enforce it, it goes in
+  **tool config**, not a document (frontend: biome/eslint, tsc; backend: checkstyle/ktlint/ruff/mypy/
+  ArchUnit; either: a CI gate). Document conventions carry only the judgment a tool cannot make. When
+  enforceability is uncertain, decide it with **one draft-rule proof of concept** — if it detects the
+  existing violations, the tool layer is confirmed; if it cannot be expressed, drop to the next layer
+  and note `tool-enforcement candidate` alongside. If a tool catches part of it, the caught part goes
+  to the tool and only the remaining judgment to the document (never state the same thing twice).
+- **Frozen gate**: if the project declared that value or artifact frozen, do not codify — escalate
+  (report only).
+- **Two traps in evidence** (both observed):
+  - **Warming and cache bias** — a number that improved across repeated runs is a lower bound, not
+    the truth. Judge performance and "it's fixed" from the first, cold run, and record *when you
+    measured and which run it was* alongside the number. Apply the same to the other side's "we
+    fixed it" reply.
+  - **Declared ≠ applied** — presence in a spec, document, or config does not mean it runs. One real
+    measurement can flip the verdict (check the real thing once before wiring).
 
-## 4. 규약화 — 최소로, 올바른 집에, 검증 가능한 문장으로
+## 4. Codify — minimally, in the right home, in a verifiable sentence
 
-안착 우선순위 — **위에서부터 처음 맞는 층**(프로젝트별 실제 위치는 데이터 파일 §라우팅 표가 정본. 표에 없는 새 홈을 쓰면 표도 갱신):
+Landing priority — **the first layer from the top that fits** (each project's actual locations are
+owned by the §routing table in the data file; using a home not in the table means updating the table
+too):
 
-1. **도구 설정** (§3 에서 판정됨)
-2. **경로 스코프 룰** — `.claude/rules/<topic>.md` + `paths:` frontmatter(매칭 파일을 만질 때만 로드). 맞는 스코프가 없으면 **새 파일**(신규 파일 = 병렬 편집 충돌 없음)
-3. **태스크·도메인 문서** — 그 절차를 실행할 때 읽는 문서(플레이북·스펙·README)
-4. **상시 로드 문서**(AGENTS.md/CLAUDE.md) — "모든 세션·모든 파일에서 참인가"에 **예**일 때만. 예산 초과면 si-archive 먼저
+1. **Tool config** (decided in §3)
+2. **Path-scoped rule** — `.claude/rules/<topic>.md` with `paths:` frontmatter (loads only when a
+   matching file is touched). No fitting scope → **a new file** (a new file means no parallel-edit
+   conflict)
+3. **Task or domain doc** — the document someone reads while running that procedure (playbook, spec,
+   README)
+4. **Always-loaded doc** (`AGENTS.md`/`CLAUDE.md`) — only when the answer to "is this true in every
+   session, for every file?" is yes. Over budget → run si-archive first
 
-편집은 **가장 작은 변경**으로, 대상 파일의 문체·언어에 맞춰, 가능하면 **가산**(새 불릿·새 섹션 — 병렬 충돌 회피).
+Make **the smallest edit**, matching the target file's voice and language, and prefer an **addition**
+(a new bullet, a new section) to avoid parallel conflicts.
 
-**형태 매칭 — §2 의 실패 유형에 맞는 형태로 쓴다:**
+**Match the form to the failure type from §2:**
 
-| 실패 유형 | 쓸 형태 | 쓰지 말 형태 |
+| Failure type | Form to use | Form to avoid |
 |---|---|---|
-| 규율 위반 | 금지문 + 합리화 반박표 + 레드플래그 목록 | "권장"·"가능하면"·"고려한다" |
-| 산출물 형태 | **레시피** — 산출물이 무엇으로 구성되는지, 어떤 순서로 | 금지문("~하지 마라") |
-| 요소 누락 | 템플릿·체크리스트의 **필수 칸** | 템플릿 옆 산문 주의 |
-| 조건 분기 | 관측 가능한 조건식("X 면 Y") | 무조건 규칙 + 예외 절 |
+| Discipline violation | Prohibition + rationalization table + red-flag list | "prefer", "where possible", "consider" |
+| Wrong output shape | **A recipe** — what the output consists of, in what order | Prohibitions ("do not …") |
+| Missing element | A **required slot** in the template or checklist | Prose warnings next to the template |
+| Should be conditional | A conditional on an observable predicate ("if X, then Y") | An unconditional rule plus exemption clauses |
 
-**문장 품질 4규칙** (전부 실증 사고에서 나옴):
+**Four sentence-quality rules** (all of them came out of real incidents):
 
-- **판정·탐지 규칙에 무조건 단언 금지** — 조건·예외를 명시한다. ("합계는 항상 100" 단언이 정상 케이스 13건을 오검출한 사고 → "초과는 언제나 결함 / 일치는 전 항목이 명시됐을 때만"으로 분리해 썼다. 규칙을 쓰기 전에 반례를 한 번 grep 한다.)
-- **행동 지시 문장 안에는 예외 절을 넣지 않는다** — "~한다, 단 ~면 예외"는 협상 여지를 만들어 규칙을 무력화한다(예외 절 1개가 일관된 준수를 불규칙으로 떨어뜨린 워딩 실측). 적용 범위는 **구조로** 한정하고(경로 스코프 룰의 `paths:`, 안착 문서 선택), 진짜 예외는 **분리된 줄의 조건식**으로 쓴다. 면제 조항은 스코프되지 않는다 — 산출물 일부만 빼야 하면 규칙이 그 부분에 닿지 않게 배치를 바꾼다.
-- **적용 범위를 좁힐 때도 근거** — "이건 우리 케이스에만 해당"이라는 **배제 판정에도 실측**을 붙인다(다른 곳이 정말 안 걸리는지 grep). 좁히다 틀린 사고가 실제로 있었다.
-- **규칙은 그것을 실행할 절차 단계에 배선한다** — 헤더·서문에만 적힌 캡·의무는 아무도 트리거하지 않는다(캡이 헤더에만 있어 로그가 42블록·949줄까지 방치된 사고). 규칙을 쓰면 "언제·누가 실행하나"를 그 절차 문서의 해당 단계에 같이 삽입한다.
+- **No unconditional assertions in a detection or judgment rule** — state the conditions and
+  exceptions. (An assertion that "the total is always 100" produced false positives on 13 valid
+  cases → it was rewritten split in two: "exceeding is always a defect / matching only when every
+  item is stated". Grep for one counter-example before writing the rule.)
+- **Never put an exception clause inside an instruction sentence** — "do X, except when Y" opens a
+  negotiation that disarms the rule (in wording tests a single appended exception clause dropped
+  consistent compliance to erratic). Limit applicability **structurally** (the `paths:` of a
+  path-scoped rule, the choice of landing document), and write a genuine exception as **a separate
+  conditional line**. Exemption clauses do not scope — if part of an output must be exempt, change
+  the layout so the rule cannot reach it.
+- **Narrowing scope also needs evidence** — "this only applies to our case" is itself a judgment
+  that needs a measurement (grep to confirm the other places really are unaffected). Narrowing
+  wrongly has caused a real incident.
+- **Wire a rule into the procedure step that executes it** — caps and obligations written only in a
+  header or preamble are triggered by nobody (a cap that lived only in a header let a log grow to 42
+  blocks and 949 lines). When you write a rule, insert "when and by whom is this run" into the
+  matching step of that procedure document.
 
-**확정 전 효력 검증 — 그 문구가 행동을 바꾸는가**(§5 전파 **전에** 한다 — 검증에서 문장이 바뀌면 전파를 다시 해야 한다. §3 의 "선언 ≠ 적용"은 규약 문장 자체에도 적용된다):
+**Effectiveness check before finalizing — does the wording change behavior?** (Do this **before**
+§5 propagation — if the check changes the sentence, propagation has to be redone. §3's "declared ≠
+applied" applies to convention sentences too.)
 
-- **항상**: 이번 증거의 위반 사례를 새 문장으로 다시 판정한다 — 위반이 전부 걸리고 정상 사례는 걸리지 않아야 한다. 판정이 갈리는 사례가 하나라도 있으면 문장을 고친 뒤 확정한다.
-- **비용·논쟁이 큰 규약**: 같은 시나리오로 서브에이전트 3회 이상 + **규약 없는 통제군 1회**. 통제군이 실패를 재현하지 않으면 그 규약은 불필요하다 — 쓰지 않는다. 3회 산출물의 모양이 서로 갈리면 문구가 안 먹힌 것이다 — 말을 늘리기 전에 형태를 바꾼다(위 형태 매칭).
+- **Always**: re-judge this incident's violations with the new sentence — every violation must be
+  caught and the valid cases must not be. If even one case comes out ambiguous, fix the sentence
+  before finalizing.
+- **For an expensive or contested convention**: 3+ subagent runs of the same scenario, plus **one
+  control run with no convention**. If the control does not reproduce the failure, the convention is
+  unnecessary — do not write it. If the three outputs disagree in shape, the wording is not binding
+  — change the form before adding words (see the form matching above).
 
-## 5. 전파 — 규약만 고치면 기존 산출물은 낡는다
+## 5. Propagate — fixing only the rule leaves the existing artifacts stale
 
-- 새/정정 규약의 **기존 위반처를 grep 으로 소급 점검** — 이번 작업 단위 안에서 수정+검증까지 끝낼 수 있으면 동반 수정하고, 아니면 "소급 미적용 N건 + 목록"을 명시 보고한다(조용한 방치 금지 — 기준은 개수가 아니라 이번 작업 단위에서 검증까지 가능한가다).
-- 템플릿·제너레이터·스캐폴드를 고쳤으면 파생물은 자동 반영되지 않는다 — **멱등(마커 가드) 스크립트**로 전파하고 편집 카운트를 기대치와 대조한다.
-- 체크리스트·완료 기준·게이트가 있는 프로젝트면 새 규칙을 **그 체크리스트에도 배선**한다(통과 판정은 프로즈가 아니라 체크리스트에서 난다).
+- **Grep for existing violations of the new or corrected rule** — if you can fix and verify them
+  inside this unit of work, do so; otherwise report "N not retrofitted + the list" explicitly (no
+  silent neglect — the criterion is not the count, it is whether verification fits in this unit).
+- If you changed a template, generator, or scaffold, derivatives do not update themselves —
+  propagate with an **idempotent (marker-guarded) script** and compare the edit count against what
+  you expected.
+- If the project has checklists, definitions of done, or gates, **wire the new rule into those too**
+  (the pass verdict comes from the checklist, not from prose).
 
-## 6. 기록 — 작업 단위당 로그 1블록 + 개선당 색인 1줄 + 검산
+## 6. Record — one log block per unit of work + one index line per improvement + a check
 
-- §로그 **맨 위**에(최신이 위) **작업 단위당 1블록**: `### YYYY-MM-DD — 제목` + **계기**(무엇에 물렸나)/**변경**/**위치**/**검증**/**커밋·PR** — 같은 작업 단위에서 나온 개선 N건은 이 블록 안에 건별 항목으로 묶는다. 커밋이 아직 없으면 커밋·PR 칸은 `미커밋(워킹 트리)` 로 적는다(사후 해시 갱신 의무 없음 — 이력 추적은 git 소관).
-- 블록 본문은 **안착 문서에 없는 것**(계기·증거·경위·검증)을 담는다 — 규약 문장 자체는 안착 문서가 정본이다. "내용이 안착 문서에 있다"는 본문을 건너뛸 이유가 아니다(그 판단으로 색인만 쌓이고 본문 0개가 된 실측).
-- §색인에는 **개선 1건당 1줄**(**색인 역시 최신이 위**): `| 날짜 | 무엇에 물렸나(≤120자 한 줄 — 근거·경위는 본문 몫) | 안착 |`. 데이터 파일 헤더가 옛 형식("개선 1건 = §색인 1줄 + §로그 1블록")을 선언하고 있으면 그 줄도 같이 갱신한다 — 플러그인 버전 드리프트 전반의 보수는 `/self-improvement:si-init` 재실행 소관이다.
-- **그 자리에서 검산**: `grep -c '^### ' <데이터파일>` — 15 초과면 `/self-improvement:si-archive` 의 로테이션을 즉시 실행(색인·이관표는 헤드 유지, 본문만 이동).
+- At the **top** of §log (newest first), **one block per unit of work**: `### YYYY-MM-DD — title`
+  plus **Trigger** (what bit you) / **Change** / **Where** / **Verification** / **Commit·PR**. Several
+  improvements from the same unit of work become items inside that one block. With no commit yet,
+  write `uncommitted (working tree)` in the commit field (no obligation to backfill the hash — git
+  owns history).
+- The block body carries **what is not in the landing document** (trigger, evidence, how it came
+  about, verification) — the convention sentence itself is owned by the landing document. "It is
+  already in the landing doc" is not a reason to skip the body (a real case left the index growing
+  with zero bodies).
+- §index gets **one line per improvement** (**newest first here too**):
+  `| date | what bit you (≤120 chars, one line — evidence and background belong in the body) | landed |`.
+  If the data file's header still declares an older format ("1 improvement = 1 index line + 1 log
+  block"), update that line as well — repairing plugin version drift in general belongs to a re-run
+  of `/self-improvement:si-init`.
+- **Check it on the spot**: `grep -c '^### ' <datafile>` — over 15, run the rotation in
+  `/self-improvement:si-archive` immediately (index and migration table stay in the head; only
+  bodies move).
 
-## 보고 (작업 단위 종료 시 필수)
+## Reporting (required at the end of a unit of work)
 
-최종 보고에 한 줄: **"자가개선: N건 + 위치"** 또는 **"자가개선: 해당 없음"**. 이 줄이 없는 보고는 자문을 건너뛴 것이다.
-N 은 **규약화(도구·전역 문서) 건수만** 센다 — 게이트 탈락으로 로컬 처리한 건은 집계하지 않는다(언급이 필요하면 괄호로 병기).
+One line in the final report: **"self-improvement: N items + where"** or **"self-improvement: none"**.
+A report without that line skipped the check. (A project that has declared its own marker string
+keeps it — the requirement is the line, not the language.)
+N counts **only codifications** (tool config or global docs) — items that failed the gate and were
+handled locally are not counted (mention them in parentheses if useful).
 
-## 하지 말아야 할 때 — Red Flags
+## When not to — red flags
 
-| 신호 | 조치 |
+| Signal | Action |
 |---|---|
-| 재발 지점을 실명으로 못 댐 | 전역화 금지 — 로컬 문서로 |
-| "아마"·"일 것이다"로 쓰는 중 | 검증 먼저, 또는 `확인 필요` 표기 |
-| §색인에 이미 있음 | 신설 금지 — 보강 또는 종료 |
-| 기존 규칙과 충돌 | 추가 금지 — 화해 편집 |
-| frozen 선언 값·산출물 | 에스컬레이션만 |
-| 안착할 문서가 예산 초과 | si-archive 먼저 |
-| 행동 지시에 "단, ~면 예외"를 붙이는 중 | 범위는 구조로, 예외는 분리된 조건식으로 |
-| 문구 효력을 확인하지 않고 확정하려는 중 | 위반 사례 재판정 먼저(§4 효력 검증) |
+| Cannot name the recurrence sites | Do not globalize — local doc |
+| Writing "probably" or "it should be" | Verify first, or mark `needs verification` |
+| Already in the §index | Do not add — reinforce, or stop |
+| Conflicts with an existing rule | Do not add — reconcile in one edit |
+| A value or artifact declared frozen | Escalate only |
+| The landing document is over budget | Run si-archive first |
+| About to append "except when …" to an instruction | Scope structurally; write the exception as a separate conditional |
+| About to finalize without checking the wording | Re-judge the violations first (§4 effectiveness check) |
 
-라우팅·초안·게이트 판정이 애매하면 **`convention-smith` 에이전트에 위임**(READ+DRAFT — 초안만 받고 적용은 이 세션이 한다).
+When the routing, the draft, or the gate verdict is unclear, **delegate to the `convention-smith`
+agent** (READ+DRAFT — you get a draft back and this session applies it).
 
-## 메타
+## Meta
 
-이 프로토콜·라우팅 표·이 플러그인 자체도 자가개선 대상이다. 플러그인 결함은 마켓 repo(`self-improvement/`)에 같은 루프로 반영하고 `plugin.json` 의 version 을 올린다.
+This protocol, the routing table, and this plugin are themselves subject to self-improvement. Feed
+plugin defects back into the marketplace repo through the same loop and bump `version` in
+`plugin.json`.

@@ -15,10 +15,12 @@ every project that installs the plugin.
 - For anything non-trivial (a new skill, a change to the doctrine, a new layer in the
   routing model), open an issue to discuss the approach before writing.
 
-**A note on language.** The doctrine, skills, and agent are written in Korean, because that
-is the language the model is instructed in. Keep edits to those files in Korean so the
-voice stays consistent. Documentation for humans (`README.md`, this file) is English-first,
-with `README.ko.md` as the Korean mirror.
+**A note on language.** English is canonical everywhere: the doctrine, the skills, the
+agent, and `README.md`. `README.ko.md` is a mirror that points back at the English. Keep
+edits in English, and do not create a second copy of anything in another language, because
+two copies drift and the drift is silent. The one deliberate exception is the legacy Korean
+term inside the data-file detection greps, which is there so installations predating v0.5.0
+are still found rather than duplicated.
 
 ## Development setup
 

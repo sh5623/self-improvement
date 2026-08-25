@@ -1,8 +1,8 @@
-# 자가개선 독트린 — 규약은 얼어있지 않다 (self-improvement 플러그인 · 모든 프로젝트 공통)
+# Self-improvement doctrine — conventions are not frozen (self-improvement plugin · every project)
 
-1. **물리면 규약을 고친다.** 작업 중 규약·문서·절차가 없어서/틀려서/모호해서 손해를 봤다면, 그 지점만 고치고 넘어가지 말고 **규약 자체를 같은 작업 단위 안에서 스스로 수정한다.** 규약 문서 수정에 사용자 승인은 필요 없다(커밋은 프로젝트 git 규칙대로).
-2. **게이트 — 둘 다 충족할 때만 규약화한다**: ① 일반성(다른 파일·기능·작업에서 재발 — 재발 지점을 실명으로 댈 수 있다) ② 증거(측정값·실행 로그·소스 file:line·재현 절차). 일회성은 그 작업의 로컬 문서에만, 추측은 검증 후에, 프로젝트가 동결(frozen)로 선언한 값은 에스컬레이션만.
-3. **절차는 `/self-improvement:si-improve`** — 감지→분류→검증→규약화→전파→기록. 라우팅·초안이 애매하면 `convention-smith` 에이전트(플러그인 제공)에 위임한다.
-4. **가장 좁은 스코프에 쓴다**: 도구 설정(lint·CI 로 강제 가능하면 문서 금지) → 경로 스코프 룰 → 태스크 문서 → 상시 로드 문서(모든 세션에서 참일 때만). 상시 로드 문서에는 예산이 있다 — 초과·사문화 규약은 `/self-improvement:si-archive` 로 하위 층·아카이브에 이관한다.
-5. **작업 단위를 끝내기 전 자문 1회** — "이번에 물린 것 중 다른 곳에서 재발할 게 있나?" — 그리고 최종 보고에 반드시 명시: **"자가개선: N건 + 위치"** 또는 **"자가개선: 해당 없음"**. 이 줄이 없는 보고는 자문을 건너뛴 것이다.
-6. **부트스트랩**: 이 프로젝트에 규약 changelog(기본 `docs/conventions/CHANGELOG.md`)가 없으면 첫 자가개선 때 `/self-improvement:si-init` 으로 생성한다. 기존 유사 시스템이 있으면 새로 만들지 않고 그것을 등록·존중한다.
+1. **When it bites you, fix the convention.** If a convention, document, or procedure cost you time because it was missing, wrong, or ambiguous, do not just route around that one spot — **fix the convention itself, on your own, inside the same unit of work.** Editing convention docs needs no user approval (commits still follow the project's git rules).
+2. **The gate — codify only when both hold**: ① generality (it will recur in other files, features, or tasks — you can name the recurrence sites) ② evidence (a measurement, an execution log, a source `file:line`, or a reproduction). One-offs go in that task's local doc; guesses wait for verification; values the project has declared frozen get escalated, never codified.
+3. **The procedure is `/self-improvement:si-improve`** — detect → classify → verify → codify → propagate → record. When the routing or the draft is unclear, delegate to the `convention-smith` agent (shipped with this plugin).
+4. **Write it in the narrowest scope**: tool config (if a linter or CI can enforce it, a document is forbidden) → path-scoped rules → task docs → always-loaded docs (only when it is true in every session). Always-loaded docs have a budget — move anything over budget or dead to a lower layer or the archive with `/self-improvement:si-archive`.
+5. **Ask yourself once before ending any unit of work** — "of what bit me this time, what will recur elsewhere?" — and state the outcome in your final report: **"self-improvement: N items + where"** or **"self-improvement: none"**. A report without that line skipped the check. (A project that has declared its own marker string keeps it — the requirement is the line, not the language.)
+6. **Bootstrap**: if this project has no convention changelog (default `docs/conventions/CHANGELOG.md`), create one with `/self-improvement:si-init` on the first self-improvement. If a similar system already exists, do not create a second — register and respect it.

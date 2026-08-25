@@ -1,49 +1,61 @@
-# 규약 Changelog & 라우팅 (self-improvement)
+# Convention changelog & routing (self-improvement)
 
-> 이 파일이 이 프로젝트 자가개선 시스템의 **단일 데이터 파일**이다(도구는 플러그인, 데이터는 이 파일).
-> 규약 갭 처리: `/self-improvement:si-improve` · 문서 비대 정리: `/self-improvement:si-archive` · 라우팅·초안 위임: `convention-smith` 에이전트.
-> 형식: 작업 단위 1개 = §로그 1블록(그 안에 개선 N건) · 개선 1건 = §색인 1줄. **최신이 위로**(아래에 append 금지 — 두 갈래로 갈라진다).
-> 로그 본문은 **안착 문서에 없는 것**(계기·증거·경위·검증)을 담는다 — 규약 문장 자체는 안착 문서가 정본. "내용이 안착 문서에 있다"는 본문을 건너뛸 이유가 아니다.
+> This file is the **single data file** for this project's self-improvement system (the plugin is the
+> tool, this file is the data).
+> Handling a convention gap: `/self-improvement:si-improve` · trimming a bloated document:
+> `/self-improvement:si-archive` · delegating routing and drafts: the `convention-smith` agent.
+> Format: one unit of work = one §log block (holding N improvements) · one improvement = one §index
+> line. **Newest on top** (never append at the bottom, or the file splits into two orderings).
+> A log body carries **what is not in the landing document** (trigger, evidence, background,
+> verification). The convention sentence itself is owned by the landing document, and "it is already
+> in the landing doc" is not a reason to skip the body.
 
-<!-- si-plugin: v{{VERSION}} — 이 파일이 어느 플러그인 버전의 템플릿에서 나왔는지. `/self-improvement:si-init` 재실행이 이 값을 현재 버전과 대조해 위 형식 문구만 보수한다(프로젝트 데이터는 불변). 지우지 말 것. -->
+<!-- si-plugin: v{{VERSION}} — which plugin version's template this file came from. Re-running `/self-improvement:si-init` compares this against the current version and repairs only the format wording above (project data is never touched). Do not delete. -->
 
-## §라우팅 — 이 프로젝트에서 규약이 사는 곳 (좁은 스코프 우선)
+## §routing — where conventions live in this project (narrowest scope first)
 
-새 규약은 **위에서부터 처음 맞는 층**에 쓴다. 이 표가 정본이며, 표에 없는 홈을 쓰게 되면 표도 같이 갱신한다.
+A new convention goes in **the first layer from the top that fits**. This table is canonical; if you
+use a home that is not in it, update the table too.
 
-| 층 | 이 프로젝트의 실제 위치 | 로드/발동 시점 | 예산 |
+| Layer | Actual location in this project | Loads / fires when | Budget |
 | --- | --- | --- | --- |
-| 도구 설정 | {{TOOLS}} | 자동 강제 | — (문서 규약보다 항상 우선) |
-| 경로 스코프 룰 | {{RULES}} | 매칭 파일을 만질 때만 | 파일당 ≤150줄 |
-| 태스크·도메인 문서 | {{DOCS}} | 해당 작업 시 명시적 Read | 느슨(문서당 ≤400줄 권장) |
-| 상시 로드 문서 | {{ALWAYS}} | 모든 세션 | **≤200줄** — 모든 세션·모든 파일에서 참인 것만 |
-| 아카이브 | docs/conventions/archive/ | 로드 안 됨 | — (사문화 규약 + 로테이션된 로그) |
+| Tool config | {{TOOLS}} | Enforced automatically | — (always beats a document convention) |
+| Path-scoped rules | {{RULES}} | Only when a matching file is touched | ≤150 lines per file |
+| Task and domain docs | {{DOCS}} | Explicitly read during that task | Loose (≤400 lines per doc suggested) |
+| Always-loaded docs | {{ALWAYS}} | Every session | **≤200 lines** — only what is true in every session, for every file |
+| Archive | docs/conventions/archive/ | Never loaded | — (dead conventions and rotated logs) |
 
-## §예산·로테이션 규칙
+## §budgets and rotation
 
-- 예산 수치는 프로젝트 사정에 맞게 조정할 수 있다 — 단 "무제한"은 금지(예산 없는 캡은 아무도 지키지 않는다).
-- 이 파일의 §로그 본문 블록은 **최대 15개**. 기록하는 사람이 그 자리에서 검산한다:
-  `grep -c '^### ' docs/conventions/CHANGELOG.md` — 15 초과분은 오래된 것부터 `archive/CHANGELOG-ARCHIVE.md` 맨 위로 이동(**§색인·§이관표는 이 파일에 전 기간 유지** — 중복 확인이 한 파일로 끝나는 근거).
-- 층 간 이동·아카이브 이관은 `/self-improvement:si-archive` 절차를 따르고 §이관표에 1행을 남긴다.
-- 병렬 안전: 규약 편집은 **가산(새 불릿·새 섹션) 우선**, 가능하면 신규 파일(충돌 0), 공유 문서는 규칙당 작은 단일 목적 커밋/PR.
+- The budget numbers can be adjusted to suit the project, but "unlimited" is forbidden (a cap with no
+  budget is a cap nobody keeps).
+- This file's §log holds **at most 15 body blocks**. Whoever records an entry runs the check on the
+  spot: `grep -c '^### ' docs/conventions/CHANGELOG.md`. Move the overflow, oldest first, to the top
+  of `archive/CHANGELOG-ARCHIVE.md` (**§index and §migration table stay in this file for the entire
+  history**, which is what lets a duplication check finish in one file).
+- Moves between layers and migrations to the archive follow the `/self-improvement:si-archive`
+  procedure and leave one row in the §migration table.
+- Parallel safety: prefer **additive** convention edits (a new bullet, a new section), a new file
+  where possible (zero conflicts), and small single-purpose commits or PRs per rule in shared docs.
 
-## §이관표 (층 이동·아카이브 내역 — 원위치 인용은 이 표가 커버한다)
+## §migration table (layer moves and archiving; citations of old locations are covered by this table)
 
-| 일자 | 원위치 §조항 | 새 위치 | 사유 |
+| Date | Original location §clause | New location | Reason |
 | --- | --- | --- | --- |
 
-## §색인 (전 기간 · 최신이 위 — 규약화 전 중복 확인은 이 표를 훑는 것으로 시작한다)
+## §index (entire history · newest on top — a duplication check starts by skimming this table)
 
-| 날짜 | 무엇에 물렸나 (≤120자 한 줄) | 안착 |
+| Date | What bit you (≤120 chars, one line) | Landed |
 | --- | --- | --- |
-| {{DATE}} | self-improvement 시스템 부트스트랩 — 문서 지형 탐지·라우팅 표 작성 | 이 파일 |
+| {{DATE}} | Bootstrapped the self-improvement system: detected the document terrain, wrote the routing table | This file |
 
-## §로그 (최신이 위 · 블록 1개 = 작업 단위 1개 · 본문 최대 15블록)
+## §log (newest on top · one block = one unit of work · at most 15 bodies)
 
-### {{DATE}} — si-init: 자가개선 시스템 부트스트랩
+### {{DATE}} — si-init: bootstrapped the self-improvement system
 
-- **계기**: 이 프로젝트에 규약 갭을 되돌려 넣을 장소·절차가 없었다.
-- **변경**: 이 파일 생성(라우팅 표 = 탐지 결과) + 상시 로드 문서에 자가개선 절 3줄 배선.
-- **위치**: `docs/conventions/CHANGELOG.md` · {{ANCHOR_DOC}}
-- **검증**: 라우팅 표의 각 위치 실재 확인(ls/grep).
-- **커밋/PR**: (프로젝트 git 규칙대로)
+- **Trigger**: this project had no place or procedure for feeding convention gaps back in.
+- **Change**: created this file (the routing table is the detection result) and wired a three-line
+  self-improvement section into the always-loaded doc.
+- **Where**: `docs/conventions/CHANGELOG.md` · {{ANCHOR_DOC}}
+- **Verification**: confirmed each location in the routing table exists (ls/grep).
+- **Commit/PR**: (per the project's git rules)

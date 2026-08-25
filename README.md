@@ -10,7 +10,7 @@ A Claude Code plugin that turns "I just got bitten by a missing or wrong convent
 
 It is stack-agnostic. Frontend, backend, scripts, docs — the loop knows nothing about your domain, and the shape of your project's documentation is detected at setup time rather than assumed.
 
-> **Language note.** The doctrine, skills, and agent are written in **Korean**, because that is the language the model is instructed in. Claude reads and follows them regardless of the language you write in, and this README documents everything they do — but if you plan to *edit* the rules, expect Korean source text.
+> **Language note.** The doctrine, skills, and agent are written in English as of v0.5.0. Claude reads and follows them regardless of the language you work in, and the conventions it writes into your project take on the voice and language of the document they land in. If you installed v0.4.0 or earlier, the source text was Korean; see the upgrade note below.
 
 Three principles:
 
@@ -51,10 +51,10 @@ $ claude
   + src/test/java/arch/TransactionBoundaryTest.java   ArchUnit rule
   + docs/conventions/CHANGELOG.md                     index row + log block
 
-자가개선: 1건 — ArchUnit rule (tool config layer) + changelog
+self-improvement: 1 item — ArchUnit rule (tool config layer) + changelog
 ```
 
-That last line — *self-improvement: 1 item* — is the observable signal. It is a literal Korean marker specified by the doctrine, so you will see it verbatim whatever language you work in. **If it is missing, the end-of-work check was skipped**, and you can ask for it.
+That last line, *self-improvement: 1 item*, is the observable signal. The doctrine specifies it as a literal marker, so you get it verbatim whatever language you work in. **If it is missing, the end-of-work check was skipped**, and you can ask for it. A project that already declared its own marker string keeps it: the requirement is the line, not the language.
 
 ## What you get
 
@@ -131,6 +131,27 @@ This is not a design exercise. It generalizes rules that were paid for on a real
 | The existing-system probe returned a README that merely contained the words "self-improvement", with nothing to judge it by — registering it would have ended setup with no data file at all | Judge candidates by content in two tiers — an index/routing table or version stamp first, then a file that actually holds records — and exclude describe-only docs and archives |
 
 The last three rows came from a cross-model review of this plugin itself, not from the field; each was reproduced against fixtures before it was accepted.
+
+## Upgrading from 0.4.x
+
+v0.5.0 switched the doctrine, skills, and agent from Korean to English. Nothing about the procedure
+changed, and **your project's data file is untouched**, because it is project data and this plugin
+never rewrites it.
+
+Two things to know:
+
+1. **The report marker is now `self-improvement: N items`.** Earlier versions specified the Korean
+   string. If your always-loaded doc or checklists reference the old marker, either update them or
+   keep them: a project that has declared its own marker string keeps it, since the requirement is
+   the line, not the language. What is not fine is having both declared and no statement of which
+   one wins.
+2. **Run `/self-improvement:si-init` once after updating.** It compares the version stamp in your
+   data file against the plugin and repairs stale template wording, leaving your routing table,
+   index, log, and migration table exactly as they are. Data files registered from a pre-existing
+   system carry no stamp and are never auto-edited; init only reports contradictions.
+
+Detection still recognizes installations that wrote the Korean term into their always-loaded docs,
+so an older project is found and registered rather than duplicated.
 
 ## Prerequisites
 
