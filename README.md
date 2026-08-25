@@ -102,11 +102,64 @@ A new rule goes into **the first layer from the top that fits** (`si-improve` §
 /self-improvement:si-archive
 ```
 
-From then on, every work report should end with **`자가개선: N건 + 위치`** (N improvements + where) or **`자가개선: 해당 없음`** (none applicable). That line is the signal that the loop ran.
+From then on, every work report should end with **`self-improvement: N items + where`** or **`self-improvement: none`**. That line is the signal that the loop ran. If your project declared its own marker string before v0.5.0, keep it: the requirement is the line, not the language.
 
 > **What is and isn't guaranteed.** The hook injection is deterministic — the doctrine is in context, every session. What follows is instruction-following, not enforcement: nothing blocks a session that ignores it. That is exactly why the reporting line exists. If the line is missing, the end-of-work self-check was skipped, and you can ask for it.
 >
 > A `Stop` hook could block on the missing line, and deliberately does not. `Stop` fires at the end of *every* response, and cannot tell the end of a unit of work from a turn in the middle of one — demanding the line on each intermediate turn mass-produces "none applicable" and kills the signal it was meant to carry. To harden it for one project, wire the line into that project's completion checklist instead (si-improve §5).
+
+## Does it work
+
+Two kinds of evidence exist for this plugin, and they answer different questions. Neither of them is
+"teams using this ship fewer bugs", because that measurement does not exist and inventing it would
+break the plugin's own evidence gate.
+
+### Does the procedure change behavior?
+
+When v0.2.0 added three rules (classify the failure type, match the form to it, verify the wording
+before committing), those rules were tested the way `si-improve` §4 tells you to test a rule: the
+same gap scenario, handed to subagents in an isolated fixture project, with and without the change.
+
+![Five runs before the change reproduced the failure every time; three runs after passed and converged on the same shape](docs/assets/does-it-work.svg)
+
+The convergence is the part that matters. Five runs producing five different shapes means the wording
+was not binding; three runs agreeing means it was. Two further candidate rules went through the same
+method and **did not survive it**, which is the more useful result: one was redundant because the
+existing doctrine already caught the case 3/3, and one had no procedure step to wire itself into, so
+it would have gone stale exactly like the header-only cap below.
+
+### What does the absence of these devices cost?
+
+The budget model, the log rotation, and the migration table are not design preferences. Each one is
+the response to a measured incident on the project this was generalized from.
+
+![A changelog reached 42 blocks against a cap of 15; a 34 KB always-loaded document was reorganized into 5 path-scoped rules](docs/assets/budget-overshoot.svg)
+
+Two more from the same project, both about wording rather than size:
+
+| Incident | Measured | The device it produced |
+|---|---|---|
+| An unconditional assertion in a detection rule | **13 correct cases** flagged as defects | No unconditional assertions; grep for a counterexample before writing the rule |
+| The record unit was "one improvement", so a day producing eight of them | **21 index rows, 0 bodies** | One unit of work = one log block; the body carries what the landing doc cannot |
+
+### Was the plugin's own text checked?
+
+v0.4.0 came from a cross-model review that filed four defects with file and line. Each was reproduced
+against fixtures before it was accepted, and **two of the four proposed fixes were rejected by that
+check**.
+
+| Claim under test | Fixtures | Result |
+|---|---|---|
+| A README can pass as a data-file candidate | This plugin's README, the template, an index-less changelog, a plain README | Judging grep: **0 / 4 / 1 / 0** hits, so describe-only docs are excluded |
+| A strict regex for "is `@AGENTS.md` imported" | 3 `CLAUDE.md` variants: bare, backticked, bare-after-code-span | Strict regex **1/3 wrong**; plain grep plus a stated rule **3/3** |
+
+### How to read these numbers
+
+**All of it comes from one project and one fixture set.** The origin project logged roughly forty
+convention changes over a legacy migration plus API integration work, and every number above traces
+to that history or to a fixture built from it. They are published so you can see what the devices are
+for and how they were checked, not as figures to expect in your own repo. If you run this and measure
+something different, that is a contribution: open an issue.
 
 ## Where it came from
 
