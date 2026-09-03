@@ -2,7 +2,7 @@
 
 Thanks for considering a contribution. `self-improvement` is a Claude Code plugin — a set
 of instructions a model reads, not an application that runs. There is no build step and no
-runtime: everything here is Markdown plus two small JSON manifests. What that means in
+runtime: everything here is Markdown plus three small JSON files (two manifests and one hook config). What that means in
 practice is that **the text is the product**, and a sloppy sentence is a bug that ships to
 every project that installs the plugin.
 
@@ -48,7 +48,7 @@ restart the session — the running one still holds the old text.
 
 ## Testing your change
 
-There is no automated suite yet. Two checks are expected on every PR.
+There is no automated suite yet. Three checks are expected on every PR.
 
 **1. Manifest validation** — must pass clean:
 

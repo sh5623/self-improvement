@@ -3,8 +3,8 @@ name: si-init
 description: >-
   Use to bootstrap a project once, when it has no self-improvement data file (convention changelog
   and routing table). Triggers include "set up self-improvement", "si-init", and si-improve /
-  si-archive / convention-smith failing to find the data file. **Also re-run it right after a plugin
-  update** — it compares the data file's version stamp and repairs stale template wording (project
+  si-archive / convention-smith failing to find the data file. Also re-run it right after a plugin
+  update — it compares the data file's version stamp and repairs stale template wording (project
   data is never touched). Re-running is safe and idempotent: when it detects an existing system it
   registers and repairs rather than overwriting.
 ---

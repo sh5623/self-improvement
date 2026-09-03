@@ -185,7 +185,7 @@ Detection still recognizes installations that wrote the Korean term into their a
 
 ## Prerequisites
 
-Claude Code. That is the whole list. There is no build step, no runtime, and no dependency to install. The plugin is Markdown plus two JSON manifests, and the one data file it creates in your project is Markdown too.
+Claude Code. That is the whole list. There is no build step, no runtime, and no dependency to install. The plugin is Markdown plus three small JSON files (two manifests and one hook config), and the one data file it creates in your project is Markdown too.
 
 ## This plugin is subject to its own loop
 
