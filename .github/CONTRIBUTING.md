@@ -164,3 +164,17 @@ Match `--window-size` to that file's `viewBox`, then look at the PNG. If a line 
 it into two `<text>` elements and grow the container plus the `viewBox` height to match. Keep about
 8px of clearance from the right edge.
 
+
+## Codex adapter checks
+
+For a runtime adapter change, run the commands in [compatibility validation](../docs/codex-compatibility.md#validation).
+The Python fixture suite and both packages' YAML/JSON checks are wired into validate.yml.
+The optional check_runtime.py reads the real installed Codex loader without installing a plugin
+or requesting a model turn. Record the CLI version and separate structural results from model
+application-test results. The fresh-agent scenarios remain required for a behavioral release;
+use [the cross-review cases](../docs/reviews/codex-cross-review.md) to review this adapter.
+
+Keep the same-edition Claude and Codex manifest versions aligned for a release. Shared invariants
+belong in both adapters' procedures; runtime tool names, instruction ownership and hooks stay
+separate. Never copy Claude agent registration into the Codex payload. Both README languages must
+show the same installed skill names. Editing one distribution does not update another automatically.

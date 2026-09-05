@@ -6,8 +6,7 @@
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green?style=flat-square" alt="MIT License"/></a>
 </div>
 
-작업 중 규약·문서·절차에 물렸을 때 그 자리만 우회하지 않고 **규약 자체를 고치게 만드는** Claude Code
-플러그인이다. 어떤 프로젝트(FE·BE·스크립트·문서)에도 설치해 쓸 수 있다. 절차는 도메인을 모르고,
+작업 중 규약·문서·절차에 물렸을 때 그 자리만 우회하지 않고 **규약 자체를 고치게 만드는** **Claude Code·Codex 플러그인**이다. 런타임별 패키지와 지침을 분리한다. 어떤 프로젝트(FE·BE·스크립트·문서)에도 설치해 쓸 수 있다. 절차는 도메인을 모르고,
 프로젝트의 문서 지형은 설치 시 탐지해서 기록한다.
 
 3원칙:
@@ -30,23 +29,74 @@
 
 ## 설치
 
-```
+공개판 v0.7.0부터 Claude와 Codex 패키지를 각각 제공한다.
+
+### Claude Code
+
+```text
 /plugin marketplace add sh5623/self-improvement
 /plugin install self-improvement@self-improvement
 /reload-plugins
 ```
 
-> [fe-rail](https://github.com/sh5623/fe-rail)이나 [parallel-worktree](https://github.com/sh5623/parallel-worktree)도 쓴다면 마켓 하나로 받을 수 있다: [`sh5623/guardrail`](https://github.com/sh5623/guardrail).
+Claude 설치 기본 범위는 user다. 프로젝트 한정 설치는 `--scope project`를 사용한다.
+업데이트: `/plugin marketplace update self-improvement` → `/reload-plugins` → 프로젝트에서
+`/self-improvement:si-init`. 같은 배포판의 Claude 템플릿 문구만 점검·보수하고 기존 이력은 보존한다.
 
-기본은 **user 스코프** 설치라 모든 프로젝트의 모든 세션에 적용된다. 한 레포로 한정하려면 `--scope project`,
-끄려면 그 프로젝트 `.claude/settings.json`의 `enabledPlugins`에서 빼면 된다.
+[guardrail](https://github.com/sh5623/guardrail) 통합 마켓 안내는 Claude 설치에 해당한다.
 
-업데이트는 `/plugin marketplace update self-improvement` → `/reload-plugins` → 이미 세팅해 둔 프로젝트에서
-**`/self-improvement:si-init` 재실행**이다. 업데이트는 도구를 바꾸지 데이터 파일을 바꾸지 않아서, 그 파일은
-옛 템플릿이 준 문구를 그대로 들고 있다. 재실행은 버전 스탬프를 대조해 그 문구만 보수한다. 라우팅 값·색인·
-로그는 건드리지 않는다.
+### Codex
 
-![규약 갭이 게이트를 지나 가장 좁은 층으로 라우팅되는 흐름](docs/assets/loop.svg)
+```sh
+codex plugin marketplace add https://github.com/sh5623/self-improvement.git
+codex plugin add self-improvement@self-improvement-codex
+codex plugin list
+```
+
+로컬 소스로 시험하려면 첫 명령의 URL 대신 clone한 **저장소 루트의 절대 경로**를 지정한다.
+
+설치 후 **새 Codex 세션**에서 `/hooks`를 열어 이 플러그인의 SessionStart 명령을 확인하고 신뢰를 승인한다.
+설치만으로 훅이 신뢰되지는 않는다. 명령은 설치된 패키지의 doctrine.md를 읽는다.
+훅 정의가 바뀌면 다시 확인해야 한다. 이후 새 세션에서 프로젝트 초기화를 실행한다.
+
+```text
+$self-improvement:si-init
+$self-improvement:si-improve <갭 + 재발 지점 2곳 + 증거>
+$self-improvement:si-archive <예산 초과 문서 또는 지목한 죽은 규약>
+```
+
+`$` 선택기에 표시되는 **self-improvement:si-…** 스킬을 선택한다. Codex는 별도 convention-smith
+에이전트 등록을 요구하지 않으며, 기본 세션이 같은 READ/DRAFT 참고 절차를 수행한다.
+
+업데이트: `codex plugin marketplace upgrade self-improvement-codex` 후
+`codex plugin add self-improvement@self-improvement-codex`. 로컬 경로로 등록했다면 upgrade 대신 clone에서
+`git pull --ff-only`를 실행한다.
+새 세션에서 훅 상태를 확인하고 `$self-improvement:si-init`을 재실행한다. 캐시가 남는 경우에만
+`codex plugin remove self-improvement@self-improvement-codex` 후 다시 add한다. 프로젝트 이력은 삭제하지 않는다.
+
+검증 환경은 **Codex CLI 0.153.4 / macOS**다. Python 3.9+는 초기화 보조 스크립트에 필요하다.
+Python이 없으면 스킬의 수동 절차를 사용한다. CLI에 `plugin`·`/hooks`가 없으면 해당 기능을 지원하는
+버전을 사용해야 한다. 별도 호스트 앱의 플러그인·훅 지원 여부는 그 앱에서 확인한다.
+
+### Claude와 Codex를 같은 프로젝트에서 사용
+
+| 구분 | Claude Code | Codex |
+|---|---|---|
+| 배포 경로 | 저장소 루트 | `plugins/self-improvement/` |
+| 자동 로드 지침 | `CLAUDE.md` 또는 `.claude/CLAUDE.md` | `AGENTS.override.md` 우선, 없으면 `AGENTS.md` |
+| 범위 지침 | `.claude/rules/`의 `paths:` | 디렉터리별 AGENTS 지침 + 명시적 조건 |
+| 프로젝트 초기화 | `/self-improvement:si-init` | `$self-improvement:si-init` |
+| 공통 규약·색인·이력 | 기존 정본 한 개를 두 런타임이 공유 | 같은 파일과 형식 맵 재사용 |
+
+각 런타임에서 si-init을 한 번씩 실행한다. 기존 이력을 찾으면 등록하며, 데이터 파일을 복제하지 않는다.
+공통 규약 본문은 기존 공용 문서에 한 번만 두고 런타임 문서는 해당 본문을 가리킨다.
+새 Claude→AGENTS import나 문서 전체 복사를 만들지 않는다. 이미 의도적으로 사용 중인 import·심볼릭 링크는 보존한다.
+Claude/Codex 템플릿 스탬프는 따로 관리하며, 공개판·사내판 버전 숫자로 이력을 자동 변환하지 않는다.
+
+공개판과 사내판은 같은 이름의 대체 배포판이다. **한 런타임에는 한 배포판만 설치한다.**
+[마이그레이션·검증·문서 소유권 상세](docs/codex-compatibility.md)를 참고한다.
+
+![Convention repair loop](docs/assets/loop.svg)
 
 ## 실제로 이렇게 보인다
 
@@ -76,11 +126,14 @@ self-improvement: 1 item — ArchUnit rule (tool config layer) + changelog
 
 ## 구성
 
+아래 표와 예제는 Claude 어댑터 기준이다. Codex는 위의 `$self-improvement:si-…` 세 스킬과
+별도 독트린·참고 절차를 사용한다. 기존 행동 실측은 Claude 기준이며 Codex 행동 성능 수치는 아니다.
+
 | 구성물 | 역할 |
 |---|---|
 | **SessionStart 훅** (`hooks/doctrine.md`) | 독트린 6조를 **매 세션** 컨텍스트에 주입한다. 물리면 규약을 고친다, 증거 게이트, 종료 자문, 보고 의무. compact 후에도 재주입되므로 긴 세션에서도 잊히지 않는다. |
 | `/self-improvement:si-improve` | 프로토콜 본체: 감지 → 분류 → 검증 → 규약화 → 전파 → 기록 |
-| `/self-improvement:si-init` | 프로젝트 부트스트랩(멱등): 문서 지형 탐지 → 데이터 파일 생성 → 상시 로드 문서에 포인터 3줄. 기존 시스템을 등록할 때도 실제 경로를 배선해 다음 세션이 다시 추론하지 않게 하고, 그 시스템에 이 플러그인의 표가 없으면 무엇이 각 표를 대신하는지 적은 **형식 맵**을 함께 남겨 다른 스킬이 계속 동작하게 한다. 플러그인 업데이트 후 재실행하면 버전 드리프트를 보수한다. |
+| `/self-improvement:si-init` | 프로젝트 부트스트랩(멱등): 문서 지형 탐지 → 데이터 파일 생성 → Claude 로드 문서에 짧은 포인터. 기존 시스템을 등록할 때도 실제 경로를 배선해 다음 세션이 다시 추론하지 않게 하고, 그 시스템에 이 플러그인의 표가 없으면 무엇이 각 표를 대신하는지 적은 **형식 맵**을 함께 남겨 다른 스킬이 계속 동작하게 한다. 플러그인 업데이트 후 재실행하면 버전 드리프트를 보수한다. |
 | `/self-improvement:si-archive` | 비대·사문화 이관. 진입 조건이 둘로 독립돼 있다. 예산을 넘은 문서, 또는 누군가 지목한 사문화·중복 조항(이쪽은 예산과 무관) → 강등/병합/사문화 → 이관표 → changelog 로테이션 |
 | `convention-smith` 에이전트 | 라우팅·초안이 애매할 때 위임한다. READ와 DRAFT만 하고, 게이트 판정과 최소 diff 초안을 돌려주며 적용은 호출자가 한다. |
 
@@ -98,14 +151,14 @@ self-improvement: 1 item — ArchUnit rule (tool config layer) + changelog
 | 층 | 로드/발동 | 비고 |
 |---|---|---|
 | 도구 설정 (lint·format·type·test·CI) | 자동 강제 | 도구가 잡을 수 있으면 **문서 금지**. 문서 규약은 판단만 담는다 |
-| 경로 스코프 룰 (`.claude/rules/*.md` + `paths:`) | 매칭 파일을 만질 때만 | 기본 안착지. 신규 파일이면 병렬 작업 충돌이 0이다 |
+| Claude 경로 스코프 룰 (`.claude/rules/*.md` + `paths:`) | 매칭 파일을 만질 때만 | 기본 안착지. 신규 파일이면 병렬 작업 충돌이 0이다 |
 | 태스크·도메인 문서 (`docs/**`) | 해당 작업 시 명시적 Read | 플레이북·스펙 |
-| 상시 로드 문서 (AGENTS.md/CLAUDE.md) | 모든 세션 | **≤200줄 예산.** 모든 세션·모든 파일에서 참인 것만 |
+| 런타임별 상시 로드 문서 (Claude: CLAUDE.md / Codex: AGENTS.md) | 모든 세션 | **≤200줄 예산.** 모든 세션·모든 파일에서 참인 것만 |
 | 아카이브 (`docs/conventions/archive/`) | 로드 안 됨 | 사문화 규약과 로테이션된 로그. 삭제가 아니라 보존이라 "의도적 제거"와 "누락"이 구분된다 |
 
 비대 관리 장치 3개:
 
-- **로그 로테이션.** changelog 본문 블록은 15개 캡이다. 기록하는 사람이 그 자리에서 `grep -c '^### '`로
+- **로그 로테이션.** changelog 본문 블록은 15개 캡이다. 기록하는 사람이 그 자리에서 실제 로그 절의 작업 블록 수(코드 펜스의 예제 헤딩 제외)를
   검산하고 넘친 만큼 아카이브로 내린다. §색인과 §이관표는 전 기간 헤드에 남으므로 중복 확인이 파일 하나를
   훑는 것으로 끝난다.
 - **이관표.** 층 이동이나 아카이브 1건마다 1행. 원문서에 개별 포인터를 남발하지 않고 표 하나가 옛 인용을
@@ -129,7 +182,7 @@ self-improvement: 1 item — ArchUnit rule (tool config layer) + changelog
 이후 모든 작업 보고 끝에 **`self-improvement: N items + where`** 또는 **`self-improvement: none`** 한 줄이
 붙는 것이 정상 동작 신호다.
 
-> **보장되는 것과 아닌 것.** 훅의 주입은 결정론적이라 독트린은 매 세션 반드시 컨텍스트에 들어간다.
+> **보장 범위.** 지원되는 런타임에서 활성화되고 신뢰된 SessionStart 훅이 성공해야 독트린이 주입된다.
 > 그다음 행동은 지시 준수의 문제이지 강제가 아니고, 무시하는 세션을 차단하는 장치는 없다.
 > 그래서 보고 라인이 존재한다. 그 줄이 없으면 종료 자문을 건너뛴 것이고, 되물어 복구할 수 있다.
 >
@@ -217,8 +270,9 @@ v0.6.0에서 2건). 각 건을 픽스처나 플러그인 자기 텍스트로 재
 
 ## 요구 사항
 
-Claude Code. 이게 전부다. 빌드 단계도, 런타임도, 설치할 의존성도 없다. 플러그인은 Markdown과 작은 JSON
-파일 3개(매니페스트 2개 + 훅 설정 1개)이고, 프로젝트에 만드는 데이터 파일 하나도 Markdown이다.
+설치할 패키지에 맞는 Claude Code 또는 Codex가 필요하다. 빌드 단계는 없다. Codex 초기화 보조 도구는
+Python 3.9+를 사용하며 수동 절차도 제공한다. 훅 신뢰 설정과 검증 버전은 설치 절을 참고한다.
+PyYAML은 개발 검증용 의존성이며 실제 스킬 실행에는 필요하지 않다.
 
 ## 이 플러그인 자체도 자가개선 대상
 

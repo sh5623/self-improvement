@@ -1,0 +1,20 @@
+{
+  "name": "self-improvement-codex",
+  "interface": {
+    "displayName": "Self Improvement Codex"
+  },
+  "plugins": [
+    {
+      "name": "self-improvement",
+      "source": {
+        "source": "local",
+        "path": "./plugins/self-improvement"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}

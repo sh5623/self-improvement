@@ -6,7 +6,7 @@
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green?style=flat-square" alt="MIT License"/></a>
 </div>
 
-A Claude Code plugin. When a missing or wrong convention bites you, it fixes **the convention**, in the same unit of work, instead of leaving you with a workaround that only helps the file you happened to be in.
+A plugin for **Claude Code and Codex**, with separate runtime adapters. When a missing or wrong convention bites you, it fixes **the convention**, in the same unit of work, instead of leaving you with a workaround that only helps the file you happened to be in.
 
 It is stack agnostic. Frontend, backend, scripts, docs: the loop knows nothing about your domain, and it detects the shape of your project's documentation at setup time rather than assuming one.
 
@@ -20,19 +20,74 @@ Three principles:
 
 ## Install
 
-```
+Public v0.7.0 adds a separate Codex package alongside the Claude plugin.
+
+### Claude Code
+
+```text
 /plugin marketplace add sh5623/self-improvement
 /plugin install self-improvement@self-improvement
 /reload-plugins
 ```
 
-> Also using [fe-rail](https://github.com/sh5623/fe-rail) or [parallel-worktree](https://github.com/sh5623/parallel-worktree)? Install them from one marketplace: [`sh5623/guardrail`](https://github.com/sh5623/guardrail).
+Claude installs at user scope by default; use `--scope project` for a project-scoped install.
+To update: `/plugin marketplace update self-improvement`, `/reload-plugins`, then
+`/self-improvement:si-init` in existing projects. It checks same-edition Claude template wording
+while preserving project history. The [guardrail](https://github.com/sh5623/guardrail) aggregate
+marketplace is an alternative for Claude installation.
 
-It installs at **user scope** by default, so it applies to every session in every project. Use `--scope project` to limit it to one repo, or drop it from that project's `.claude/settings.json` under `enabledPlugins` to turn it off.
+### Codex
 
-To update: `/plugin marketplace update self-improvement`, then `/reload-plugins`, then **re-run `/self-improvement:si-init`** in projects you had already set up. An update replaces the tool but not the data file, so that file keeps whatever wording the older template gave it. The re-run compares a version stamp and repairs that wording only. Your routing values, index, and log are left alone.
+```sh
+codex plugin marketplace add https://github.com/sh5623/self-improvement.git
+codex plugin add self-improvement@self-improvement-codex
+codex plugin list
+```
 
-![How a convention gap is gated and routed into the narrowest layer that fits](docs/assets/loop.svg)
+For a local checkout, replace the URL with the absolute **repository root**, not its plugin subdirectory.
+Start a **new Codex session**, open `/hooks`, review this plugin's SessionStart command, and trust it.
+Installation alone does not trust hooks. The command reads the installed doctrine.md; changed hook
+definitions need another review. Then start a new session and initialize the project:
+
+```text
+$self-improvement:si-init
+$self-improvement:si-improve <gap + two recurrence sites + evidence>
+$self-improvement:si-archive <over-budget document or named dead rule>
+```
+
+Select **self-improvement:si-…** in the `$` skill picker. No convention-smith agent registration is
+required: the main session uses a bundled READ/DRAFT reference, with optional authorized delegation.
+
+To update: `codex plugin marketplace upgrade self-improvement-codex`, then
+`codex plugin add self-improvement@self-improvement-codex`. For a local marketplace, run
+`git pull --ff-only` in the checkout instead of marketplace upgrade. Start a new session, check hook
+trust, and rerun `$self-improvement:si-init`. If a stale cache persists, remove the plugin with
+`codex plugin remove self-improvement@self-improvement-codex` and add it again. Keep project history.
+
+Validated with **Codex CLI 0.153.4 / macOS**. Python 3.9+ is needed only for the init helper; the skill
+includes a manual fallback. Use a Codex release with `plugin` and `/hooks` support. Other host apps
+must expose the corresponding plugin/hook capabilities; CLI validation does not establish that.
+
+### Using Claude and Codex in the same project
+
+| Concern | Claude Code | Codex |
+|---|---|---|
+| Plugin payload | Repository root | `plugins/self-improvement/` |
+| Instruction entry | `CLAUDE.md` or `.claude/CLAUDE.md` | `AGENTS.override.md`, otherwise `AGENTS.md` |
+| Scoped instructions | `.claude/rules/` with `paths:` | Directory AGENTS instructions and explicit conditions |
+| Project setup | `/self-improvement:si-init` | `$self-improvement:si-init` |
+| Shared conventions, index and history | One existing canonical system | The same file and its format map |
+
+Run si-init once in each runtime. Existing history is registered, never duplicated. Shared rule
+bodies stay in shared project docs; runtime entrypoints point to them. New installs do not copy
+whole instruction files or create Claude→AGENTS imports. Intentional legacy imports/symlinks stay.
+Claude and Codex template stamps have separate ownership; public/internal version numbers do not
+trigger cross-edition migrations.
+
+Public and internal editions are alternatives with identical skill names: **install one edition
+per runtime**. See [migration, ownership and validation details](docs/codex-compatibility.md).
+
+![Convention repair loop](docs/assets/loop.svg)
 
 ## What it looks like
 
@@ -60,11 +115,15 @@ That last line, *self-improvement: 1 item*, is the observable signal. The doctri
 
 ## What you get
 
+This table and the example below describe the Claude adapter. Codex uses the three namespaced
+`$self-improvement:si-…` skills above, a separate doctrine, and bundled references. Historical
+behavioral measurements below are Claude results, not measured Codex behavior.
+
 | Component | Role |
 |---|---|
 | **SessionStart hook** (`hooks/doctrine.md`) | Injects a 6-clause doctrine into **every session**: fix the rule rather than just your file, the evidence gate, the end-of-work self-check, the reporting duty. It is re-injected after a compaction, so long sessions do not lose it. |
 | `/self-improvement:si-improve` | The protocol itself: detect → classify → verify → codify → propagate → record. |
-| `/self-improvement:si-init` | Per-project bootstrap, idempotent: detect the documentation landscape → create the data file → wire a 3-line pointer into the always-loaded doc. That includes the case where it registers a system you already had, so the next session inherits the paths instead of re-deriving them — and, when that system has none of this plugin's tables, a **format map** saying what stands in for each, so the other skills keep working on it. Re-run it after a plugin update to repair version drift. |
+| `/self-improvement:si-init` | Per-project bootstrap, idempotent: detect the documentation landscape → create the data file → wire a compact pointer into the Claude instruction document. That includes the case where it registers a system you already had, so the next session inherits the paths instead of re-deriving them — and, when that system has none of this plugin's tables, a **format map** saying what stands in for each, so the other skills keep working on it. Re-run it after a plugin update to repair version drift. |
 | `/self-improvement:si-archive` | Bloat and dead-rule migration with two independent entry conditions — a document over budget, or a dead or duplicated clause someone named (that one is not gated on budget) → demote, merge, or retire → migration table → changelog rotation. |
 | `convention-smith` agent | Delegate here when routing or drafting is unclear. READ and DRAFT only: it returns a gate verdict and a minimal diff, and the caller applies it. |
 
@@ -79,14 +138,14 @@ A new rule goes into **the first layer from the top that fits** (`si-improve` §
 | Layer | When it loads | Notes |
 |---|---|---|
 | Tool config (lint, format, types, tests, CI) | Enforced automatically | If a tool can catch it, **it must not be prose**. Prose rules carry judgment calls only. |
-| Path-scoped rules (`.claude/rules/*.md` with `paths:`) | Only when a matching file is touched | The default home. A new file means zero conflicts for parallel work. |
+| Claude path-scoped rules (`.claude/rules/*.md` with `paths:`) | Only when a matching file is touched | The default home. A new file means zero conflicts for parallel work. |
 | Task and domain docs (`docs/**`) | Read explicitly when doing that task | Playbooks, specs. |
-| Always-loaded doc (`AGENTS.md` / `CLAUDE.md`) | Every session | **≤200 lines.** Only what is true in every session, for every file. |
+| Runtime instruction doc (Claude: `CLAUDE.md`; Codex: `AGENTS.md`) | Every session | **≤200 lines.** Only what is true in every session, for every file. |
 | Archive (`docs/conventions/archive/`) | Never loaded | Retired rules and rotated log entries, preserved rather than deleted, so "deliberately removed" stays distinguishable from "lost". |
 
 ### Three devices keep it from bloating
 
-- **Log rotation.** The changelog holds at most 15 body blocks. Whoever records an entry checks it on the spot with `grep -c '^### '` and rotates the overflow into the archive. The index and migration tables stay in the head file for the full history, which is what makes duplicate-checking a single-file scan.
+- **Log rotation.** The changelog holds at most 15 body blocks. Whoever records an entry checks it on the spot by counting actual work blocks inside the log section, excluding fenced examples and rotates the overflow into the archive. The index and migration tables stay in the head file for the full history, which is what makes duplicate-checking a single-file scan.
 - **The migration table.** One row per demotion or retirement. Old citations resolve through that one table instead of scattering pointers across the documents they left.
 - **Caps get wired into the procedure that executes them**, never only into a document header. This one is not theoretical: a cap that lived only in a file header went untriggered until that log had grown to 42 blocks and 949 lines.
 
@@ -106,7 +165,7 @@ A new rule goes into **the first layer from the top that fits** (`si-improve` §
 
 From then on, every work report should end with **`self-improvement: N items + where`** or **`self-improvement: none`**. That line is the signal that the loop ran. If your project declared its own marker string before v0.5.0, keep it: the requirement is the line, not the language.
 
-> **What is and isn't guaranteed.** The hook injection is deterministic, so the doctrine is in context every session. What follows is instruction-following rather than enforcement, and nothing blocks a session that ignores it. That is exactly why the reporting line exists. If the line is missing, the end-of-work self-check was skipped, and you can ask for it.
+> **Guarantee boundary.** Doctrine injection requires a supported runtime and a successful, enabled, trusted SessionStart hook. What follows is instruction-following rather than enforcement, and nothing blocks a session that ignores it. That is exactly why the reporting line exists. If the line is missing, the end-of-work self-check was skipped, and you can ask for it.
 >
 > A `Stop` hook could block on the missing line, and deliberately does not. `Stop` fires at the end of *every* response and cannot tell the end of a unit of work from a turn in the middle of one. Demanding the line on each intermediate turn would mass-produce "none applicable" and kill the signal it was meant to carry. To harden it for one project, wire the line into that project's completion checklist instead (`si-improve` §5).
 
@@ -187,7 +246,7 @@ Detection still recognizes installations that wrote the Korean term into their a
 
 ## Prerequisites
 
-Claude Code. That is the whole list. There is no build step, no runtime, and no dependency to install. The plugin is Markdown plus three small JSON files (two manifests and one hook config), and the one data file it creates in your project is Markdown too.
+Use the Claude Code or Codex runtime for the package you install. Both use Markdown/JSON without a build step. Codex’s optional init helper uses Python 3.9+; see the installation section for hook trust and tested versions. PyYAML is a development validation dependency only.
 
 ## This plugin is subject to its own loop
 

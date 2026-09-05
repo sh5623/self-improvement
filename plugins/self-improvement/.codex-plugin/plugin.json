@@ -1,0 +1,28 @@
+{
+  "name": "self-improvement",
+  "version": "0.7.0",
+  "description": "Evidence-gated convention repair, registration and archiving for Codex.",
+  "author": {
+    "name": "Seungho"
+  },
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Self Improvement (Codex)",
+    "shortDescription": "Repair recurring convention gaps with evidence.",
+    "longDescription": "Codex-native skills and SessionStart doctrine. Reuses project records while separating runtime-specific instructions.",
+    "developerName": "Seungho",
+    "category": "Productivity",
+    "capabilities": [
+      "Read",
+      "Write"
+    ],
+    "defaultPrompt": [
+      "Use $self-improvement:si-init to register this project's convention system.",
+      "Use $self-improvement:si-improve for the evidenced convention gap in this task.",
+      "Use $self-improvement:si-archive to review the named obsolete rules."
+    ]
+  },
+  "homepage": "https://github.com/sh5623/self-improvement",
+  "repository": "https://github.com/sh5623/self-improvement.git",
+  "license": "MIT"
+}

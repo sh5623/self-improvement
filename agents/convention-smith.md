@@ -6,6 +6,8 @@ tools: Read, Grep, Glob, Bash
 
 # convention-smith — routing and drafting for convention gaps (generic)
 
+Read [Claude runtime boundaries](../references/claude-runtime.md) before drafting.
+
 ## Why it exists
 
 So that a session hitting a convention gap does not reinvent "which document does this go in?" every
@@ -25,7 +27,7 @@ project's data file describes.
 ## Procedure
 
 ### 0. Locate the data file
-① the path declared in the self-improvement section of the always-loaded doc (AGENTS.md/CLAUDE.md) →
+① the path declared in the self-improvement section of the always-loaded doc (CLAUDE.md/.claude/CLAUDE.md; legacy AGENTS declarations supply data paths only) →
 ② `docs/conventions/CHANGELOG.md` → ③ fallback
 `grep -ril "CONVENTIONS-CHANGELOG\|self-improvement\|자가개선" --include="*.md" docs .claude . | grep -v node_modules | head`
 — with several candidates, pick **the file that has an §index table** and exclude anything with

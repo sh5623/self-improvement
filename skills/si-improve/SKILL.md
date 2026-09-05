@@ -11,6 +11,8 @@ description: >-
 
 # si-improve — the self-improvement protocol: detect → classify → verify → codify → propagate → record
 
+Read [Claude runtime boundaries](../../references/claude-runtime.md) before this procedure.
+
 ## Principles
 
 - **Conventions are not frozen.** Do not route around the spot that bit you — fix the convention,
@@ -23,8 +25,7 @@ description: >-
 
 The first of these that matches is the data file:
 
-1. **The path declared in the self-improvement section of the always-loaded doc** (`AGENTS.md` /
-   `CLAUDE.md`) — if present, that declaration is authoritative (si-init §4 wires it; for projects
+1. **The path declared in the self-improvement section of the always-loaded doc** (`CLAUDE.md` / `.claude/CLAUDE.md`; legacy AGENTS pointers supply data only) — if present, that declaration is authoritative (si-init §4 wires it; for projects
    with a pre-existing system registered, it is the only channel that carries it forward).
 2. `docs/conventions/CHANGELOG.md`.
 3. Fallback grep:
@@ -120,6 +121,10 @@ one type measurably backfires on another.
 
 ## 4. Codify — minimally, in the right home, in a verifiable sentence
 
+For a judgment used by both runtimes, keep the rule body once in a shared project doc;
+Claude scope files point to it. The following Claude instruction destinations apply to
+Claude-only content. Do not modify Codex-owned instructions while applying this adapter.
+
 Landing priority — **the first layer from the top that fits** (each project's actual locations are
 owned by the §routing table in the data file; using a home not in the table means updating the table
 too. A registered system whose format map says `routing: none` uses this default order as-is and
@@ -131,7 +136,7 @@ names the actual home in the log entry — §0):
    conflict)
 3. **Task or domain doc** — the document someone reads while running that procedure (playbook, spec,
    README)
-4. **Always-loaded doc** (`AGENTS.md`/`CLAUDE.md`) — only when the answer to "is this true in every
+4. **Claude always-loaded doc** (`CLAUDE.md` / `.claude/CLAUDE.md`) — only when the answer to "is this true in every
    session, for every file?" is yes. Over budget → run si-archive first
 
 Make **the smallest edit**, matching the target file's voice and language, and prefer an **addition**

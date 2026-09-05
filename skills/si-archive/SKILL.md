@@ -11,6 +11,8 @@ description: >-
 
 # si-archive — the demotion and archiving system for bloated or dead conventions
 
+Read [Claude runtime boundaries](../../references/claude-runtime.md) before this procedure.
+
 ## Principles
 
 - **Movement is downward only**: always-loaded doc → path-scoped rule or task doc (scope demotion);
@@ -24,6 +26,10 @@ description: >-
   file skim.
 
 ## 0. Resolve the paths — the two values every command below substitutes
+
+Read the Claude declaration first; legacy AGENTS declarations supply shared data paths only.
+Measure and edit Claude-owned instructions or shared project docs, not Codex-owned instructions.
+
 
 Find them with si-improve §0's search order (① the path declared in the always-loaded doc's
 self-improvement section → ② `docs/conventions/CHANGELOG.md` → ③ fallback grep, picking **the file

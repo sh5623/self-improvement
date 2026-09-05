@@ -6,36 +6,34 @@ on:
   pull_request:
 
 jobs:
-  validate:
+  package-and-init:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        python: ['3.9', '3.13']
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Install validation dependency
+        run: python -m pip install PyYAML==6.0.3
+      - name: Validate both runtime packages and YAML frontmatter
+        run: python plugins/self-improvement/scripts/validate_packages.py --repo .
+      - name: Check data preservation, runtime boundaries and relocated payload
+        run: python -m unittest discover -s plugins/self-improvement/tests -v
+
+  claude-manifests:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
-      # Every skill and agent frontmatter must parse as YAML. An unquoted "word:" inside a
-      # description shipped as invalid YAML in a sibling plugin: the body still loaded, but the
-      # metadata (name, description) was dropped, so nothing could trigger the skill.
-      - name: Parse skill and agent frontmatter
-        run: |
-          set -e
-          found=0
-          for f in $(git ls-files 'skills/*/SKILL.md' 'agents/*.md'); do
-            found=1
-            ruby -ryaml -e '
-              src = File.read(ARGV[0])
-              fm  = src[/\A---\n(.*?)\n---\n/m, 1] or abort("#{ARGV[0]}: no frontmatter block")
-              data = YAML.safe_load(fm)
-              %w[name description].each { |k| abort("#{ARGV[0]}: missing #{k}") unless data[k].is_a?(String) && !data[k].strip.empty? }
-              puts "ok  #{ARGV[0]}"
-            ' "$f"
-          done
-          [ "$found" = 1 ] || { echo "no skill or agent files found"; exit 1; }
-
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-
       - name: Install Claude Code
         run: npm install -g @anthropic-ai/claude-code
-
-      - name: Validate plugin and marketplace manifests
-        run: claude plugin validate . --strict
+      - name: Validate Claude plugin and marketplace separately
+        run: |
+          claude plugin validate .claude-plugin/plugin.json --strict
+          claude plugin validate .claude-plugin/marketplace.json --strict
