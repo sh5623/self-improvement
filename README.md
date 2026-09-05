@@ -101,14 +101,14 @@ $ claude
     The second repository write was running outside the transaction boundary.
 
   Before finishing: does this recur anywhere else?
-    · PaymentService.java:141, SettlementService.java:52 — same shape (grep)
+    · PaymentService.java:141, SettlementService.java:52: same shape (grep)
     · evidence: production log + file:line          → gate passed
     · a linter can enforce this, so it is not prose → tool config layer
 
   + src/test/java/arch/TransactionBoundaryTest.java   ArchUnit rule
   + docs/conventions/CHANGELOG.md                     index row + log block
 
-self-improvement: 1 item — ArchUnit rule (tool config layer) + changelog
+self-improvement: 1 item (ArchUnit rule in the tool config layer + changelog)
 ```
 
 That last line, *self-improvement: 1 item*, is the observable signal. The doctrine specifies it as a literal marker, so you get it verbatim whatever language you work in. **If it is missing, the end-of-work check was skipped**, and you can ask for it. A project that already declared its own marker string keeps it, because the requirement is the line, not the language.
@@ -123,8 +123,8 @@ behavioral measurements below are Claude results, not measured Codex behavior.
 |---|---|
 | **SessionStart hook** (`hooks/doctrine.md`) | Injects a 6-clause doctrine into **every session**: fix the rule rather than just your file, the evidence gate, the end-of-work self-check, the reporting duty. It is re-injected after a compaction, so long sessions do not lose it. |
 | `/self-improvement:si-improve` | The protocol itself: detect → classify → verify → codify → propagate → record. |
-| `/self-improvement:si-init` | Per-project bootstrap, idempotent: detect the documentation landscape → create the data file → wire a compact pointer into the Claude instruction document. That includes the case where it registers a system you already had, so the next session inherits the paths instead of re-deriving them — and, when that system has none of this plugin's tables, a **format map** saying what stands in for each, so the other skills keep working on it. Re-run it after a plugin update to repair version drift. |
-| `/self-improvement:si-archive` | Bloat and dead-rule migration with two independent entry conditions — a document over budget, or a dead or duplicated clause someone named (that one is not gated on budget) → demote, merge, or retire → migration table → changelog rotation. |
+| `/self-improvement:si-init` | Per-project bootstrap, idempotent: detect the documentation landscape → create the data file → wire a compact pointer into the Claude instruction document. That includes the case where it registers a system you already had, so the next session inherits the paths instead of re-deriving them. When that system has none of this plugin's tables, it also writes a **format map** saying what stands in for each, so the other skills keep working on it. Re-run it after a plugin update to repair version drift. |
+| `/self-improvement:si-archive` | Bloat and dead-rule migration with two independent entry conditions: a document over budget, or a dead or duplicated clause someone named (that one is not gated on budget). Then demote, merge, or retire → migration table → changelog rotation. |
 | `convention-smith` agent | Delegate here when routing or drafting is unclear. READ and DRAFT only: it returns a gate verdict and a minimal diff, and the caller applies it. |
 
 The plugin is the versioned **tool**. What lands in your project is **one data file** (`docs/conventions/CHANGELOG.md`, holding the routing table, budgets, migration table, index, and log) plus three lines of pointer. Updating the plugin never touches the history your project has accumulated. That separation is also why the data file carries a version stamp: the boilerplate it was generated from can fall behind the procedure, and `si-init` reconciles exactly that and nothing else.
@@ -145,7 +145,7 @@ A new rule goes into **the first layer from the top that fits** (`si-improve` §
 
 ### Three devices keep it from bloating
 
-- **Log rotation.** The changelog holds at most 15 body blocks. Whoever records an entry checks it on the spot by counting actual work blocks inside the log section, excluding fenced examples and rotates the overflow into the archive. The index and migration tables stay in the head file for the full history, which is what makes duplicate-checking a single-file scan.
+- **Log rotation.** The changelog holds at most 15 body blocks. Whoever records an entry checks it on the spot by counting the actual work blocks inside the log section (fenced examples excluded) and rotates the overflow into the archive. The index and migration tables stay in the head file for the full history, which is what makes duplicate-checking a single-file scan.
 - **The migration table.** One row per demotion or retirement. Old citations resolve through that one table instead of scattering pointers across the documents they left.
 - **Caps get wired into the procedure that executes them**, never only into a document header. This one is not theoretical: a cap that lived only in a file header went untriggered until that log had grown to 42 blocks and 949 lines.
 
@@ -226,10 +226,10 @@ Every row below is an actual incident from a real project (a legacy migration pl
 | An existing convention system was "registered" by reporting its location, which died with the session. The next session re-ran the same fallback grep, whose first hit was a README and whose third was an archive file. | Registration writes the real paths into the always-loaded doc, and the lookup reads that declaration first, then falls back to a grep that requires an index table and excludes archives |
 | After a plugin update the data file still declared the older template's rules, and nothing could tell | A version stamp in the data file plus an `si-init` re-run that reconciles it. Generated files get their boilerplate repaired; pre-existing systems get a contradiction report and nothing more. |
 | §0 resolved the data file's path, then every command after it typed the default path anyway. On a project whose existing system lives elsewhere, the duplicate check and the rotation count read a file that is not there, and a grep over a missing file returns zero hits and passes quietly. | Resolve the path once in §0 and substitute `<datafile>` and `<archive>` in every command after it, with an `ls` to prove the file exists |
-| The pointer was written into `AGENTS.md` alone, but Claude Code reads `CLAUDE.md` rather than `AGENTS.md`, so the pointer never loaded and the next session fell back to grepping | Writing to `AGENTS.md` also guarantees the `@AGENTS.md` import in `CLAUDE.md` (or a symlink), in the same step, and the report states which path actually loads |
+| The pointer was written into `AGENTS.md` alone, but Claude Code reads `CLAUDE.md` rather than `AGENTS.md`, so the pointer never loaded and the next session fell back to grepping | The registration writes the pointer where the runtime actually loads it, and the report states which path loaded. Until v0.6.0 that meant adding an `@AGENTS.md` import to `CLAUDE.md` in the same step; since v0.7.0 the Claude adapter writes to `CLAUDE.md` (or `.claude/CLAUDE.md`) directly, creates no new import, and leaves an existing import or symlink alone |
 | The existing-system probe returned a README that merely contained the words "self-improvement", with nothing to judge it by. Registering it would have ended setup with no data file at all. | Judge candidates by content in two tiers, an index or routing table or version stamp first, then a file that actually holds records, and exclude describe-only docs and archives |
-| `si-init` registered a table-less existing system as canonical and (correctly) refused to graft tables onto it, but `si-improve`, `si-archive`, and `convention-smith` all went on to "skim the §index" and "route per the §routing table" of a file that had neither. Registration succeeded; the next improvement stalled. | The registration writes a **format map** into the declaration (what stands in for the index, the log unit, the routing table, the archive — `none` is a valid value), and every consumer reads the map and takes its fallback branch instead of grepping a heading that does not exist |
-| `si-archive`'s description promised to retire dead and duplicated clauses, but its first step read "everything within budget → stop". A 100-line document with a rule for a deleted feature could never reach the classification step. | Two entry triggers measured separately: over budget, or a named dead/duplicate clause — and the second is explicitly not gated on budget |
+| `si-init` registered a table-less existing system as canonical and (correctly) refused to graft tables onto it, but `si-improve`, `si-archive`, and `convention-smith` all went on to "skim the §index" and "route per the §routing table" of a file that had neither. Registration succeeded; the next improvement stalled. | The registration writes a **format map** into the declaration (what stands in for the index, the log unit, the routing table, and the archive; `none` is a valid value), and every consumer reads the map and takes its fallback branch instead of grepping a heading that does not exist |
+| `si-archive`'s description promised to retire dead and duplicated clauses, but its first step read "everything within budget → stop". A 100-line document with a rule for a deleted feature could never reach the classification step. | Two entry triggers measured separately: over budget, or a named dead/duplicate clause, and the second is explicitly not gated on budget |
 
 The last five rows came from cross-model reviews of this plugin itself rather than from the field (three in v0.4.0, two in v0.6.0). Each was reproduced against fixtures or the plugin's own text before it was accepted.
 

@@ -6,7 +6,7 @@
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green?style=flat-square" alt="MIT License"/></a>
 </div>
 
-작업 중 규약·문서·절차에 물렸을 때 그 자리만 우회하지 않고 **규약 자체를 고치게 만드는** **Claude Code·Codex 플러그인**이다. 런타임별 패키지와 지침을 분리한다. 어떤 프로젝트(FE·BE·스크립트·문서)에도 설치해 쓸 수 있다. 절차는 도메인을 모르고,
+작업 중 규약·문서·절차에 물렸을 때 그 자리만 우회하지 않고 **규약 자체를 고치게 만드는** Claude Code·Codex 플러그인이다. 런타임별 패키지와 지침을 분리한다. 어떤 프로젝트(FE·BE·스크립트·문서)에도 설치해 쓸 수 있다. 절차는 도메인을 모르고,
 프로젝트의 문서 지형은 설치 시 탐지해서 기록한다.
 
 3원칙:
@@ -110,14 +110,14 @@ $ claude
     두 번째 리포지토리 쓰기가 트랜잭션 경계 밖에서 돌고 있었다.
 
   마치기 전에: 이게 다른 데서도 재발하나?
-    · PaymentService.java:141, SettlementService.java:52 — 같은 모양 (grep)
+    · PaymentService.java:141, SettlementService.java:52: 같은 모양 (grep)
     · 증거: 운영 로그 + file:line              → 게이트 통과
     · 린터가 강제할 수 있다 → 문서가 아니라 도구 설정 층
 
   + src/test/java/arch/TransactionBoundaryTest.java   ArchUnit 룰
   + docs/conventions/CHANGELOG.md                     색인 1줄 + 로그 1블록
 
-self-improvement: 1 item — ArchUnit rule (tool config layer) + changelog
+self-improvement: 1 item (ArchUnit rule in the tool config layer + changelog)
 ```
 
 마지막 줄 *self-improvement: 1 item*이 관측 가능한 신호다. 독트린이 리터럴 마커로 지정하므로 어느 언어로
@@ -260,7 +260,7 @@ v0.4.0은 다른 모델이 이 플러그인의 텍스트를 읽고 file:line과 
 | 기존 규약 시스템을 "위치 보고"로 등록해 세션과 함께 사라졌다. 다음 세션은 같은 폴백 grep을 다시 돌렸고, 첫 후보는 README, 세 번째는 아카이브 파일이었다 | 등록은 상시 로드 문서에 실제 경로를 쓰고, 탐색은 그 선언을 가장 먼저 읽는다. 폴백 grep은 색인 표 보유를 요구하고 아카이브를 제외한다 |
 | 플러그인 업데이트 후에도 데이터 파일이 옛 템플릿 규칙을 선언하고 있었고, 그것을 알아챌 방법이 없었다 | 데이터 파일의 버전 스탬프와 `si-init` 재실행 대조. 생성분은 정형 문구를 보수하고, 기존 시스템은 모순 보고까지만 한다 |
 | §0이 데이터 파일 경로를 찾아 놓고도 그다음 명령이 전부 기본 경로를 타이핑했다. 기존 시스템이 다른 경로에 있는 프로젝트에서는 중복 검사와 로테이션 검산이 없는 파일을 읽었고, 없는 파일 grep은 0건으로 조용히 통과한다 | 경로는 §0에서 한 번 확정하고 이후 모든 명령이 `<datafile>`·`<archive>`를 치환한다. `ls`로 실재를 먼저 증명한다 |
-| 포인터를 `AGENTS.md`에만 썼는데 Claude Code는 `CLAUDE.md`만 읽는다. 포인터가 로드되지 않아 다음 세션은 다시 grep으로 돌아갔다 | `AGENTS.md`에 쓰면 같은 단계에서 `CLAUDE.md`의 `@AGENTS.md` import(또는 심볼릭 링크)까지 보장하고, 보고에 실제 로드 경로를 적는다 |
+| 포인터를 `AGENTS.md`에만 썼는데 Claude Code는 `CLAUDE.md`만 읽는다. 포인터가 로드되지 않아 다음 세션은 다시 grep으로 돌아갔다 | 등록은 런타임이 실제로 읽는 자리에 포인터를 쓰고, 보고에 로드 경로를 적는다. v0.6.0까지는 같은 단계에서 `CLAUDE.md`에 `@AGENTS.md` import를 넣는 방식이었고, v0.7.0부터 Claude 어댑터는 `CLAUDE.md`(또는 `.claude/CLAUDE.md`)에 직접 쓰며 새 import를 만들지 않고 기존 import·심볼릭 링크는 그대로 둔다 |
 | 기존 시스템 감지가 "self-improvement"라는 단어만 든 README를 후보로 돌려줬고 판별 근거가 없었다. 그것을 등록하면 데이터 파일 없이 셋업이 끝난다 | 후보를 내용으로 2단 판별한다. ① 색인·라우팅 표나 버전 스탬프 ② 표는 없어도 실제 기록을 담은 파일. 설명 전용 문서와 아카이브는 제외한다 |
 | `si-init`은 표 없는 기존 시스템을 정본으로 등록하고 (옳게) 표를 강제 이식하지 않았는데, `si-improve`·`si-archive`·`convention-smith`는 그 파일에 없는 "§색인을 훑고" "§라우팅 표대로 라우팅"하려 했다. 등록은 성공했고 다음 개선은 거기서 멈췄다 | 등록이 선언에 **형식 맵**을 쓴다(색인·로그 단위·라우팅 표·아카이브를 무엇이 대신하는지. `none`도 정식 값이다). 모든 소비자가 그 맵을 읽고, 없는 헤딩을 grep 하는 대신 폴백 갈래를 탄다 |
 | `si-archive`의 설명은 사문화·중복 조항 정리를 약속했는데 첫 단계가 "전부 예산 내면 종료"였다. 삭제된 기능의 규칙이 든 100줄짜리 문서는 분류 단계에 도달할 수 없었다 | 진입 트리거를 둘로 나눠 따로 잰다. 예산 초과, 또는 지목된 사문화·중복 조항. 후자는 명시적으로 예산에 묶이지 않는다 |
