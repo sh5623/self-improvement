@@ -37,8 +37,10 @@ grep -n "^#\+ .*[Ii]ndex\|^#\+ .*[Rr]outing\|^#\+ .*색인\|^#\+ .*라우팅\|si
 - **A data file in this plugin's format**: has an §index/§routing table, or a `<!-- si-plugin: v` stamp.
 - **An existing system in another shape**: no such table, but **it genuinely holds convention
   records** (dated log blocks, a list of clauses). Missing tables, budgets, or a migration table are
-  not grounds for exclusion. Recognize it as canonical and register it, and merely *propose* the
-  missing pieces per the third bullet below.
+  not grounds for exclusion. Recognize it as canonical and register it, merely *propose* the
+  missing pieces per the third bullet below, and **write its format map** (§4) so that si-improve,
+  si-archive, and convention-smith know what to read in place of the tables they would otherwise
+  assume.
 - **Not a candidate**: a document that only **describes** the system (a README, a plugin
   introduction, zero records), or any file with `archive`/`ARCHIVE` in its name or path (new blocks
   would stack on top of old logs).
@@ -52,7 +54,11 @@ Treatment by verdict:
   Run §4's wiring **with its real paths substituted in**, and do not stop at reporting. A report dies
   with the session, and the next session re-runs the same fallback grep and picks the README or the
   archive again. If that system lacks something (routing table, budgets, rotation, migration table),
-  raise it **as a proposal only**. Never graft it on by force.
+  raise it **as a proposal only**. Never graft it on by force. What makes a table-less system
+  *usable* afterwards is not the graft but the **format map** in the §4 declaration: the three
+  skills and the agent read that map and substitute the file's own parts for the tables. (Before
+  the map existed, registration succeeded and the very next si-improve stalled on "skim the
+  §index" of a file that had none.)
 - **Zero candidates remain, so there is no existing system**: go to §2 and create one. Finishing here
   with a mistaken registration means no data file gets created, and the next session's si-improve §0
   picks up the same README again.
@@ -142,13 +148,27 @@ files** into those three lines, naming each one separately when the data file, p
 archive are split apart. The next session's si-improve §0 reads this declaration **first**, so this
 wiring is the only channel that carries the existing system forward.
 
+**For a registered system, add a fourth line — the format map.** si-improve, si-archive, and
+convention-smith are written against this plugin's shape (§routing table, §index, `### ` log
+blocks, §migration table). A registered system may have none of those, and §1 forbids grafting them
+on, so declare what stands in for each. Later sessions read this line instead of assuming:
+
+```markdown
+Format: data file `<path>` (own format) · index: <§section, or "none — grep the log headings"> · log unit: <"### YYYY-MM-DD blocks" | "dated bullets" | …> · routing: <§section or file, or "none — default layer order"> · archive: <path, or "none — propose before rotating">
+```
+
+Every slot may say `none`. A missing slot, or a registered system with no `Format:` line at all, is
+read as `none` everywhere (si-improve §0, si-archive §0, convention-smith §0). Do not invent a
+value to fill a slot: `none` routes those procedures to their fallback branch, an invented section
+name sends them to grep a heading that does not exist and pass silently.
+
 ## 5. Report
 
 - Where the pointer was wired, plus **the Claude load path**: `<file>` and
   `CLAUDE.md import: present / added / not applicable (the pointer is in CLAUDE.md itself)`. Finishing
   with the pointer only in AGENTS.md and no import is a wiring failure.
-- Result: `created` / `registered existing` (path) / `repaired N` (write version drift repairs as
-  `vX.Y.Z → vA.B.C, N lines of wording`) / `contradictions N` (unstamped existing system: proposals
-  only).
+- Result: `created` / `registered existing` (path, **plus the format map exactly as written into
+  the declaration**) / `repaired N` (write version drift repairs as `vX.Y.Z → vA.B.C, N lines of
+  wording`) / `contradictions N` (unstamped existing system: proposals only).
 - Show the full routing table, so the user can correct a detection error immediately.
 - One next action: "when something bites you, run `/self-improvement:si-improve`".

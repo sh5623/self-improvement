@@ -40,10 +40,20 @@ a missing file returns 0 hits and passes silently, manufacturing a false "no dup
 - `<datafile>` = the file found in ①–③ (confirm it exists with `ls <datafile>`).
 - `<archive>` = the archive path from the declaration if it names one, otherwise `archive/` in the
   directory holding `<datafile>`.
+- **The format map** — the `Format:` line of declaration ① (si-init §4), present only for a
+  registered system. It says what stands in for each of this plugin's tables. `index: none` → §1
+  reads the file's headings (`grep -n "^#" <datafile>`) instead of an §index table. `routing: none`
+  → §3 routes by the default layer order and names that order as the basis. A log unit other than
+  `### ` blocks → §6 drafts the record in that unit, and the `grep -c '^### '` check line is
+  replaced by "not applicable (log unit: …)". `archive: none` → the archive grep in §1 is skipped
+  and any rotation is proposed, not drafted as a move. No map on a registered system → every slot
+  is `none`. Never invent a section name to fill a slot: a grep for a heading that does not exist
+  returns 0 and passes silently, which is the same failure the two values above guard against.
 
 ### 1. Duplication and precedent (do this first)
-- **Read only the §index table** of the data file. Never read the whole file: the index covers the
-  entire history, and bodies past 15 blocks rotate into the archive.
+- **Read only the §index table** of the data file (or, when the format map says `index: none`, only
+  its headings). Never read the whole file: the index covers the entire history, and bodies past 15
+  blocks rotate into the archive.
 - Grep keywords across head and archive together:
   `grep -n "<keyword>" <datafile> <archive>/*.md 2>/dev/null`.
 - If an index hit has no body in the head, only then read that block from the archive.
@@ -67,6 +77,9 @@ The first layer from the top that fits: **tool config** (a linter or CI can enfo
 document) → **path-scoped rule** (no fitting scope means proposing a new file, since a new file has
 no parallel conflicts) → **task or domain doc** → **always-loaded doc** (only when it is true in
 every session, for every file; check the budget and propose running si-archive first if it is over).
+When the format map says `routing: none`, this default order *is* the routing table: state "basis:
+default layer order (no §routing table)" in the output, and add "propose a routing table via
+si-init" once rather than assuming one.
 For a repeatable analysis or verification task, propose a new `.claude/agents/<name>.md` (check for a
 reusable existing agent first, and state that a new agent is recognized from the next session
 onward).
@@ -95,6 +108,9 @@ onward).
   top here too).
 - Leave the applier a check: if `grep -c '^### ' <datafile>` exceeds 15, run the si-archive rotation.
   Write `<datafile>` as the real path in that check line, so the caller does not have to search again.
+- In a registered system, draft the block in **the file's own record unit** (the format map's
+  `log unit`) with the same five fields as content, and replace the check line with "not applicable
+  (log unit: …)" when that unit is not `### ` blocks.
 
 ## Output (return exactly this shape)
 
@@ -102,7 +118,7 @@ onward).
 ## Convention gap proposal — <the gap in one line>
 - Duplication/contradiction: <none | existing location, reconciliation plan>
 - Value gate: <global convention | local (rejected) | resubmit after verifying (rejected) | escalate (frozen)>
-- Landing spot: <file §section> (basis: the layer in the §routing table)
+- Landing spot: <file §section> (basis: the layer in the §routing table | default layer order — no §routing table)
 
 ### Draft edit
 <file path>
@@ -115,7 +131,7 @@ new: ```…```
 ### Record draft
 <one index line>
 <one changelog block>
-- Check: grep -c '^### ' … (>15 means si-archive)
+- Check: grep -c '^### ' … (>15 means si-archive) | not applicable (log unit: …)
 ```
 
 ## Prohibited

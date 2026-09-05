@@ -44,6 +44,19 @@ measures nothing):
 - `<datafile>` = the file you found above.
 - `<archive>` = the archive path from declaration 1 if it names one, otherwise `archive/` in the
   directory holding `<datafile>` (created on the first rotation).
+- **The format map** (registered systems only — the `Format:` line of declaration 1, written by
+  si-init §4). A generated data file has this plugin's shape and needs no map. A registered system
+  may lack every table, and si-init forbids grafting them on, so each step below that names a
+  §index, §routing table, `### ` block, or §migration table uses the stand-in the map names. A slot
+  that says `none` — or a registered system with no map at all — means:
+  - `index: none` → the duplication check in §3 is `grep -n "^#" <datafile>` over the headings plus
+    the keyword grep, and the log heading doubles as the index line (keep it ≤120 chars).
+  - `routing: none` → route by §4's default layer order and write the actual home into the log
+    entry; propose the table once (si-init §1), do not add it.
+  - a log unit other than `### ` blocks → record in §6 in the file's own unit, keeping the five
+    fields as content; the `grep -c '^### '` rotation check applies only to `### ` blocks, so count
+    by the map's unit or leave the count to si-archive.
+  - `archive: none` → nothing rotates; an over-cap log is reported, not moved.
 
 ## 1. Detect — is it worth codifying? (the gate)
 
@@ -81,7 +94,8 @@ one type measurably backfires on another.
 ## 3. Verify — prove it before you write it
 
 - **Duplication**: skim **the §index only** (never read the whole file — the index covers the entire
-  history). Then grep keywords across head and archive together:
+  history; in a registered system without one, skim the stand-in the format map names — §0). Then
+  grep keywords across head and archive together:
   `grep -n "<keyword>" <datafile> <archive>/*.md 2>/dev/null` (substituted per §0 — confirm the file
   exists with `ls <datafile>` first, so "0 hits because the file is missing" is distinguishable from
   a real 0). Already there → reclassify as a reinforcement or clarification, or stop.
@@ -108,7 +122,8 @@ one type measurably backfires on another.
 
 Landing priority — **the first layer from the top that fits** (each project's actual locations are
 owned by the §routing table in the data file; using a home not in the table means updating the table
-too):
+too. A registered system whose format map says `routing: none` uses this default order as-is and
+names the actual home in the log entry — §0):
 
 1. **Tool config** (decided in §3)
 2. **Path-scoped rule** — `.claude/rules/<topic>.md` with `paths:` frontmatter (loads only when a
@@ -180,7 +195,8 @@ applied" applies to convention sentences too.)
   plus **Trigger** (what bit you) / **Change** / **Where** / **Verification** / **Commit·PR**. Several
   improvements from the same unit of work become items inside that one block. With no commit yet,
   write `uncommitted (working tree)` in the commit field (no obligation to backfill the hash — git
-  owns history).
+  owns history). In a registered system, write the block in **the file's own record unit** (the
+  format map's `log unit`, §0) — the five fields are the content, the heading shape is the file's.
 - The block body carries **what is not in the landing document** (trigger, evidence, how it came
   about, verification) — the convention sentence itself is owned by the landing document. "It is
   already in the landing doc" is not a reason to skip the body (a real case left the index growing
@@ -192,7 +208,8 @@ applied" applies to convention sentences too.)
   of `/self-improvement:si-init`.
 - **Check it on the spot**: `grep -c '^### ' <datafile>` — over 15, run the rotation in
   `/self-improvement:si-archive` immediately (index and migration table stay in the head; only
-  bodies move).
+  bodies move). That count is meaningful only for `### ` blocks; with another log unit, count by
+  the format map's unit, and with `archive: none` report the overflow instead of moving it (§0).
 
 ## Reporting (required at the end of a unit of work)
 

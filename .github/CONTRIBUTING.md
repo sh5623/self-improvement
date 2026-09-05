@@ -48,13 +48,22 @@ restart the session — the running one still holds the old text.
 
 ## Testing your change
 
-There is no automated suite yet. Three checks are expected on every PR.
+Three checks are expected on every PR. The first runs in CI (`.github/workflows/validate.yml`,
+on every push and pull request); the other two are yours to run and paste.
 
-**1. Manifest validation** — must pass clean:
+**1. Manifest validation and frontmatter parse** — must pass clean:
 
 ```bash
 claude plugin validate . --strict
+for f in skills/*/SKILL.md agents/*.md; do
+  ruby -ryaml -e 'YAML.safe_load(File.read(ARGV[0])[/\A---\n(.*?)\n---\n/m,1]) && puts "ok #{ARGV[0]}"' "$f"
+done
 ```
+
+The frontmatter parse exists because a sibling plugin shipped a `description:` containing an
+unquoted `word:` — invalid YAML that Claude Code tolerates by loading the body with empty metadata,
+which silently removes the description that triggers the skill. Keep multi-sentence descriptions in
+a `>-` block scalar, as every skill here already does.
 
 **2. An application test.** This is the one that actually catches problems. Give a *fresh*
 agent nothing but the changed skill text and a scenario **from a stack you did not have in
@@ -83,7 +92,7 @@ changed text **three times** and read all three outputs: they should land on the
 Three different interpretations means the wording is not binding yet, and the fix is a
 different form rather than more words.
 
-If you add an automated check, wire it into this section in the same PR.
+If you add an automated check, wire it into this section **and** into the workflow in the same PR.
 
 ## Making changes
 

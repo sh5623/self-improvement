@@ -33,21 +33,37 @@ system has different paths, and measuring a file that does not exist reads as "w
 
 - `<datafile>` = the data file you found. Confirm it exists with `ls <datafile>` before proceeding.
 - `<archive>` = the archive path from the declaration if it names one, otherwise `archive/` in the
-  directory holding `<datafile>` (this skill creates it if missing).
+  directory holding `<datafile>` (this skill creates it if missing — **unless** the format map says
+  `archive: none`, in which case dead clauses and rotation are *proposed*, never moved).
+- **The format map** (registered systems only — the `Format:` line of the declaration, si-init §4).
+  `routing: none` → §1 measures the two documents every project has (the always-loaded doc and
+  `<datafile>`) and lists the rest as "not measured — no routing table; propose one via si-init".
+  A log unit other than `### ` blocks → count §1 and §4 by that unit. No map on a registered system
+  → every slot is `none`.
 
-## 1. Measure — compare against the budgets
+## 1. Entry — two triggers, measured separately
 
-For each document in `<datafile>`'s §routing table:
+**Trigger A — over budget.** For each document in `<datafile>`'s §routing table (or, with no table,
+the always-loaded doc and `<datafile>` — §0):
 
 ```bash
 wc -l <always-loaded doc> <path-scoped rule files…>   # compare against the budgets in the table
 grep -c '^### ' <datafile>                            # log body blocks (cap 15)
 ```
 
-If everything is within budget, **stop**. "No cleanup needed" is a valid result, and forcing a
-migration is not an improvement. Take only what is over budget to §2.
+Over budget → that document goes to §2, and an over-cap log goes to §4.
 
-## 2. Classify the clauses in an over-budget document (clause by clause)
+**Trigger B — a dead or duplicated clause was named.** The caller asked for a cleanup pass, si-improve
+§2 classified a gap as "removal of a dead rule", or a specific clause was reported as living in two
+places. **Budget does not gate this trigger**: a 100-line document can carry a rule for a feature
+that no longer exists, and it should not have to reach 200 lines before that rule can be retired.
+The named document (or clause) goes to §2 even when every measurement in trigger A is within budget.
+
+If neither trigger fires, **stop**. "No cleanup needed" is a valid result, and forcing a migration is
+not an improvement. Take to §2 only what a trigger named: trigger A does not license a sweep of
+documents that are within budget, and trigger B does not license touching clauses nobody named.
+
+## 2. Classify the clauses in the document a trigger named (clause by clause)
 
 | Verdict | Criterion | Treatment |
 |---|---|---|
@@ -75,15 +91,17 @@ absent, confirm the replacing tool rule exists. "I don't think we use this" is n
 
 If log blocks > 15, move the oldest bodies (as many as the overflow) to the **top** of
 `<archive>/CHANGELOG-ARCHIVE.md` (create it if missing). The §index rows and the §migration table
-stay in the head file (`<datafile>`). Re-run the check afterwards to confirm ≤15.
+stay in the head file (`<datafile>`). Re-run the check afterwards to confirm ≤15. In a registered
+system, count by the format map's log unit, and if the map says `archive: none`, report the
+overflow with a proposed archive path instead of moving anything (§0).
 
 ## 5. Verify and report
 
 - Re-measure (the §1 commands) and confirm every document is within budget.
 - Final grep on the moved clauses' keywords to confirm zero dangling citations.
-- Report: **demoted N · merged N · dead N · rotated N blocks**, plus where the migration table is.
-  If this pass surfaced a convention gap, handle it through si-improve and include the
-  "self-improvement: N items / none" line.
+- Report: **trigger A / B / both · demoted N · merged N · dead N · rotated N blocks**, plus where
+  the migration table is (or "proposed — archive: none"). If this pass surfaced a convention gap,
+  handle it through si-improve and include the "self-improvement: N items / none" line.
 
 ## Why it has this shape — the incidents behind it
 
@@ -94,3 +112,7 @@ stay in the head file (`<datafile>`). Re-run the check afterwards to confirm ≤
   path-scoped rules. That is why scope demotion is the first treatment to reach for. During the
   reorganization, documents citing the old locations were covered by **a single migration table**,
   which beats dozens of individual pointers.
+- The entry condition once read "everything within budget → stop", while the description promised a
+  dead-rule pass. The two contradicted each other: a rule for a deleted feature in a 100-line
+  document could never reach §2. A cross-repo review (2026-09) caught it, and §1 now has two
+  triggers, with the dead/duplicate one explicitly not gated on budget.
