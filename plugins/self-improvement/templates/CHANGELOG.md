@@ -25,7 +25,8 @@ verification and commit/PR. The rule text remains in its canonical document.
 ## §budgets and rotation
 
 Measure the routed instruction docs before adding rules. Keep at most 15 actual work
-blocks in §log; count only this section, ignoring code-fenced headings. On overflow,
+blocks in §log; count with si-archive's fence-aware procedure (this section only; headings
+inside code fences do not count). On overflow,
 si-archive moves the oldest bodies to the registered archive's CHANGELOG-ARCHIVE.md. If the
 archive is none, propose a destination before moving records. The full index and migration
 history stay here. Existing project budgets can override these defaults.

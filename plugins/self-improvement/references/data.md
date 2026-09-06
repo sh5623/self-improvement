@@ -42,8 +42,27 @@ does not authorize mirroring the rule itself.
 
 Default budgets: root instructions 200 lines, scoped instructions 150 lines each, task docs
 400 lines suggested, log body 15 work blocks. Project values take precedence. Count only
-actual log bodies, ignoring headings inside code fences or other sections. Keep the index
+actual log bodies with the fence-aware command below (also shipped as
+`scripts/count_log_blocks.sh <datafile> [unit] [section]`, resolved relative to this package).
+`unit` is the record regex the format map names (`^### ` for the generated layout, `^- ` for
+dated bullets); `sec` matches the log section's `## ` heading (`''` counts a file with no `## `
+headings). A fence is CommonMark's: up to 3 spaces of indentation, then 3 or more backticks or
+tildes, closed only by the same character at the same length or longer with nothing but spaces
+after. Headings inside a fence, a shorter or different inner fence, and headings in other
+sections are not counted; plain `grep -c '^### '` over-counts all of those. Keep the index
 and migration history in the head file when rotating oldest bodies.
+
+````sh
+awk -v unit='^### ' -v sec='§(log|로그)' '
+BEGIN { inlog = (sec == "") }
+{ t = ""; if (match($0, /^ ? ? ?(```+|~~~+)/)) { t = substr($0, RSTART, RLENGTH); sub(/^ +/, "", t) } }
+fence == "" && t != "" { fence = substr(t, 1, 1); flen = length(t); next }
+fence != "" { if (t != "" && substr(t, 1, 1) == fence && length(t) >= flen && substr($0, RSTART + RLENGTH) ~ /^[ \t]*$/) fence = ""; next }
+/^## / { inlog = (sec == "" || $0 ~ sec); next }
+inlog && $0 ~ unit { n++ }
+END { print n + 0 }
+' <datafile>
+````
 
 Before writing a shared data file, reread the affected section to incorporate another
 session's changes. A new file or additive edit does not eliminate concurrency conflicts.

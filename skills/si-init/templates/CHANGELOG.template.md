@@ -34,7 +34,8 @@ loading behavior; add Codex rows only after inspecting the actual AGENTS instruc
 - The budget numbers can be adjusted to suit the project, but "unlimited" is forbidden (a cap with no
   budget is a cap nobody keeps).
 - This file's §log holds **at most 15 body blocks**. Whoever records an entry runs the check on the
-  spot: count actual work blocks in §log, excluding fenced example headings. Move the overflow, oldest first, to the top
+  spot with si-improve §5's fence-aware count (`### ` blocks inside §log only; headings inside code
+  fences or in other sections do not count). Move the overflow, oldest first, to the top
   of `archive/CHANGELOG-ARCHIVE.md` (**§index and §migration table stay in this file for the entire
   history**, which is what lets a duplication check finish in one file).
 - Moves between layers and migrations to the archive follow the active runtime’s si-archive

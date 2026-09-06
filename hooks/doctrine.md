@@ -1,6 +1,6 @@
 # Self-improvement doctrine — conventions are not frozen (self-improvement plugin · every project)
 
-Applies only when running in Claude Code. Keep shared records; follow this plugin's references/claude-runtime.md for document ownership. Codex has a separate package and doctrine.
+Applies only when running in Claude Code. Keep shared records. Codex has a separate package and doctrine.
 
 1. **When it bites you, fix the convention.** If a convention, document, or procedure cost you time because it was missing, wrong, or ambiguous, do not just route around that one spot — **fix the convention itself, on your own, inside the same unit of work.** Editing convention docs needs no user approval (commits still follow the project's git rules).
 2. **The gate — codify only when both hold**: ① generality (it will recur in other files, features, or tasks — you can name the recurrence sites) ② evidence (a measurement, an execution log, a source `file:line`, or a reproduction). One-offs go in that task's local doc; guesses wait for verification; values the project has declared frozen get escalated, never codified.

@@ -117,7 +117,7 @@ installing the plugin, changing user trust, sending a model turn, or publishing 
 
 Local validation used Codex CLI 0.153.4, Claude Code 2.1.261 and macOS. Automated fixtures cover
 data preservation, fresh setup, reruns, custom formats, ambiguous/missing paths, symlinks,
-override precedence, relocatable payloads and shell quoting. CI additionally configures these checks
+override precedence, relocatable payloads, shell quoting and the fence-aware log count (indented fences, a different or shorter inner fence, headings outside the log section, and the documented copies matching `scripts/count_log_blocks.sh`). CI additionally configures these checks
 on Linux/macOS with Python 3.9/3.13; configured coverage is not a claim those hosted jobs ran.
 
 These are structural and deterministic checks. End-to-end install/trust/compact behavior in the

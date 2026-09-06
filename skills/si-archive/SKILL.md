@@ -52,12 +52,26 @@ system has different paths, and measuring a file that does not exist reads as "w
 **Trigger A — over budget.** For each document in `<datafile>`'s §routing table (or, with no table,
 the always-loaded doc and `<datafile>` — §0):
 
-```bash
+````bash
 wc -l <always-loaded doc> <path-scoped rule files…>   # compare against the budgets in the table
-grep -c '^### ' <datafile>                            # log body blocks (cap 15)
-```
+# log body blocks (cap 15): fence-aware, log section only. unit = the format map's record regex
+# (^### for the generated layout, ^- for dated bullets); sec = the log section's ## heading ('' = whole file)
+awk -v unit='^### ' -v sec='§(log|로그)' '
+BEGIN { inlog = (sec == "") }
+{ t = ""; if (match($0, /^ ? ? ?(```+|~~~+)/)) { t = substr($0, RSTART, RLENGTH); sub(/^ +/, "", t) } }
+fence == "" && t != "" { fence = substr(t, 1, 1); flen = length(t); next }
+fence != "" { if (t != "" && substr(t, 1, 1) == fence && length(t) >= flen && substr($0, RSTART + RLENGTH) ~ /^[ \t]*$/) fence = ""; next }
+/^## / { inlog = (sec == "" || $0 ~ sec); next }
+inlog && $0 ~ unit { n++ }
+END { print n + 0 }
+' <datafile>
+````
 
-Over budget → that document goes to §2, and an over-cap log goes to §4.
+The awk treats a fence the way CommonMark does (up to 3 spaces, then 3 or more backticks or tildes,
+closed only by the same character at the same length or longer), so example headings inside fences, a
+shorter or different inner fence, and headings in other sections are not counted. Plain
+`grep -c '^### '` over-counts each of those. Over budget → that document goes to §2, and an over-cap
+log goes to §4.
 
 **Trigger B — a dead or duplicated clause was named.** The caller asked for a cleanup pass, si-improve
 §2 classified a gap as "removal of a dead rule", or a specific clause was reported as living in two

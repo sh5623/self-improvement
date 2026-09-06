@@ -55,8 +55,8 @@ measures nothing):
   - `routing: none` → route by §4's default layer order and write the actual home into the log
     entry; propose the table once (si-init §1), do not add it.
   - a log unit other than `### ` blocks → record in §6 in the file's own unit, keeping the five
-    fields as content; the `grep -c '^### '` rotation check applies only to `### ` blocks, so count
-    by the map's unit or leave the count to si-archive.
+    fields as content; the §5 count takes the map's unit as its `unit` regex (dated bullets → `^- `),
+    or leave the count to si-archive.
   - `archive: none` → nothing rotates; an over-cap log is reported, not moved.
 
 ## 1. Detect — is it worth codifying? (the gate)
@@ -211,10 +211,29 @@ applied" applies to convention sentences too.)
   If the data file's header still declares an older format ("1 improvement = 1 index line + 1 log
   block"), update that line as well — repairing plugin version drift in general belongs to a re-run
   of `/self-improvement:si-init`.
-- **Check it on the spot**: `grep -c '^### ' <datafile>` — over 15, run the rotation in
-  `/self-improvement:si-archive` immediately (index and migration table stay in the head; only
-  bodies move). That count is meaningful only for `### ` blocks; with another log unit, count by
-  the format map's unit, and with `archive: none` report the overflow instead of moving it (§0).
+- **Check it on the spot** with the fence-aware count below (the same command as si-archive §1). Over
+  15, run the rotation in `/self-improvement:si-archive` immediately (index and migration table stay
+  in the head; only bodies move). With `archive: none` report the overflow instead of moving it (§0).
+
+````bash
+awk -v unit='^### ' -v sec='§(log|로그)' '
+BEGIN { inlog = (sec == "") }
+{ t = ""; if (match($0, /^ ? ? ?(```+|~~~+)/)) { t = substr($0, RSTART, RLENGTH); sub(/^ +/, "", t) } }
+fence == "" && t != "" { fence = substr(t, 1, 1); flen = length(t); next }
+fence != "" { if (t != "" && substr(t, 1, 1) == fence && length(t) >= flen && substr($0, RSTART + RLENGTH) ~ /^[ \t]*$/) fence = ""; next }
+/^## / { inlog = (sec == "" || $0 ~ sec); next }
+inlog && $0 ~ unit { n++ }
+END { print n + 0 }
+' <datafile>
+````
+
+`unit` is one record anchored at column 0: `^### ` for this plugin's layout, or the unit a registered
+system's format map names (dated bullets → `^- `). `sec` matches the `## ` heading of the log section;
+pass `''` to count a file that has no `## ` headings. A fence is CommonMark's (up to 3 spaces of
+indentation, then 3 or more backticks or tildes; it closes only on the same character, at least as
+many, with nothing but spaces after), so an example heading inside a fence, a shorter or different
+inner fence, and a `### ` heading in another section are not counted. Plain `grep -c '^### '`
+over-counts all four of those cases.
 
 ## Reporting (required at the end of a unit of work)
 

@@ -236,6 +236,90 @@ class Initialization(unittest.TestCase):
         self.assertEqual(json.loads(result.stdout)["status"], "created")
 
 
+COUNT = PLUGIN / "scripts/count_log_blocks.sh"
+CLAUDE = PLUGIN.parents[1] if (PLUGIN.parents[1] / ".claude-plugin/plugin.json").is_file() else PLUGIN.parents[1] / "self-improvement"
+HEAD = "# log\n\n## §index\n\n| a | b |\n\n## §log\n\n### 2026-09-05 — real block\n\n- body\n"
+EXAMPLE = "### 2026-01-01 — example heading inside a fence"
+
+
+def count(path, *args):
+    result = subprocess.run(["sh", str(COUNT), str(path), *args], capture_output=True, text=True, check=True)
+    return int(result.stdout.strip())
+
+
+def program(text):
+    """The awk body every copy must share, from BEGIN to END."""
+    match = re.search(r"BEGIN \{ inlog.*?END \{ print n \+ 0 \}", text, re.S)
+    return match.group(0) if match else None
+
+
+class LogCount(unittest.TestCase):
+    """Fence handling follows CommonMark 0.31.2 §4.5; each case below is one grep over-counts."""
+
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory(prefix="si count with spaces ")
+        self.addCleanup(self.temp.cleanup)
+        self.root = Path(self.temp.name)
+
+    def data(self, body):
+        path = self.root / "CHANGELOG.md"
+        path.write_text(HEAD + body, encoding="utf-8")
+        return path
+
+    def grep(self, path):
+        return sum(1 for line in path.read_text().splitlines() if line.startswith("### "))
+
+    def test_baseline_counts_real_blocks_only(self):
+        path = self.data("\n### 2026-09-04 — second block\n\n- body\n")
+        self.assertEqual(count(path), 2)
+
+    def test_indented_fence_is_a_fence(self):
+        path = self.data(f"\n  ```md\n{EXAMPLE}\n  ```\n")
+        self.assertEqual(count(path), 1)
+        self.assertEqual(self.grep(path), 2)
+
+    def test_other_fence_character_inside_is_content(self):
+        path = self.data(f"\n```md\n~~~\n{EXAMPLE}\n~~~\n```\n")
+        self.assertEqual(count(path), 1)
+        self.assertEqual(self.grep(path), 2)
+
+    def test_shorter_inner_fence_is_content(self):
+        path = self.data(f"\n````md\n```\n{EXAMPLE}\n```\n````\n")
+        self.assertEqual(count(path), 1)
+        self.assertEqual(self.grep(path), 2)
+
+    def test_headings_outside_log_section_are_not_blocks(self):
+        path = self.data("\n## §migration\n\n### not a work block\n")
+        self.assertEqual(count(path), 1)
+        self.assertEqual(self.grep(path), 2)
+
+    def test_heading_inside_fence_does_not_switch_section(self):
+        path = self.data("\n```md\n## §index\n### still inside the fence\n```\n\n### 2026-09-03 — third block\n")
+        self.assertEqual(count(path), 2)
+
+    def test_closing_fence_needs_only_spaces_after_it(self):
+        path = self.data(f"\n```md\n``` not a closer\n{EXAMPLE}\n```\n")
+        self.assertEqual(count(path), 1)
+
+    def test_four_space_indent_is_not_a_fence(self):
+        path = self.data("\n    ```\n### 2026-09-02 — real block after an indented code line\n")
+        self.assertEqual(count(path), 2)
+
+    def test_format_map_unit_and_section(self):
+        path = self.root / "history.md"
+        path.write_text("# History\n\n## Log\n\n- 2026-09-01: a\n- 2026-09-02: b\n\n## Notes\n\n- not a record\n", encoding="utf-8")
+        self.assertEqual(count(path, "^- ", "Log"), 2)
+        self.assertEqual(count(path, "^- ", ""), 3)
+
+    def test_documented_copies_match_the_script(self):
+        canonical = program(COUNT.read_text())
+        self.assertIsNotNone(canonical)
+        for doc in [PLUGIN / "references/data.md", CLAUDE / "skills/si-improve/SKILL.md",
+                    CLAUDE / "skills/si-archive/SKILL.md"]:
+            with self.subTest(doc=doc):
+                self.assertEqual(program(doc.read_text()), canonical)
+
+
 class Package(unittest.TestCase):
     def test_catalog_resolves_to_complete_payload(self):
         repo = PLUGIN.parents[1]

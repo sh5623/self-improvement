@@ -46,8 +46,9 @@ a missing file returns 0 hits and passes silently, manufacturing a false "no dup
   registered system. It says what stands in for each of this plugin's tables. `index: none` → §1
   reads the file's headings (`grep -n "^#" <datafile>`) instead of an §index table. `routing: none`
   → §3 routes by the default layer order and names that order as the basis. A log unit other than
-  `### ` blocks → §6 drafts the record in that unit, and the `grep -c '^### '` check line is
-  replaced by "not applicable (log unit: …)". `archive: none` → the archive grep in §1 is skipped
+  `### ` blocks → §6 drafts the record in that unit, and the check line passes that unit as the
+  `unit` regex of si-improve §5's fence-aware count (or reads "not applicable (log unit: …)" when
+  the unit is not line-anchored). `archive: none` → the archive grep in §1 is skipped
   and any rotation is proposed, not drafted as a move. No map on a registered system → every slot
   is `none`. Never invent a section name to fill a slot: a grep for a heading that does not exist
   returns 0 and passes silently, which is the same failure the two values above guard against.
@@ -108,7 +109,8 @@ onward).
   landing document: trigger, evidence, background. Before a commit, the commit/PR field reads
   `uncommitted (working tree)`. Plus **one §index line** (one per improvement, ≤120 chars, newest on
   top here too).
-- Leave the applier a check: if `grep -c '^### ' <datafile>` exceeds 15, run the si-archive rotation.
+- Leave the applier a check: run si-improve §5's fence-aware count on `<datafile>` (not a plain
+  `grep -c`, which counts fenced examples and other sections); over 15, run the si-archive rotation.
   Write `<datafile>` as the real path in that check line, so the caller does not have to search again.
 - In a registered system, draft the block in **the file's own record unit** (the format map's
   `log unit`) with the same five fields as content, and replace the check line with "not applicable
@@ -133,7 +135,7 @@ new: ```…```
 ### Record draft
 <one index line>
 <one changelog block>
-- Check: grep -c '^### ' … (>15 means si-archive) | not applicable (log unit: …)
+- Check: si-improve §5 fence-aware count of <datafile> (>15 means si-archive) | not applicable (log unit: …)
 ```
 
 ## Prohibited

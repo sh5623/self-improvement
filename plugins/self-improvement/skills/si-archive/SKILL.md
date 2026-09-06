@@ -40,7 +40,10 @@ clauses and logs. Do not perform destructive half-migrations.
 
 For a configured archive and an over-cap log, move only the oldest overflowing work blocks
 to the top of the archive log. Keep the complete index and migration history in the head.
-Use the format map's real record unit and budget; default generated layout caps at 15.
+Use the format map's real record unit and budget; default generated layout caps at 15. Measure
+with the fence-aware count in [data.md](../../references/data.md) (or
+`scripts/count_log_blocks.sh`), passing the map's unit and the log section's heading; a plain
+`grep -c` of headings over-counts fenced examples and other sections.
 
 Reread shared files before applying edits. Check citations of moved rule names/sections;
 repair references or confirm the migration record resolves them. Remeasure affected files,
