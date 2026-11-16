@@ -8,8 +8,11 @@ on:
 jobs:
   package-and-init:
     strategy:
+      # One runner failing to provision must not cancel the others' results.
+      fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest]
+        # ubuntu-latest moved to 26.04, which has no Python 3.9 build; 24.04 still does.
+        os: [ubuntu-24.04, macos-latest]
         python: ['3.9', '3.13']
     runs-on: ${{ matrix.os }}
     steps:
