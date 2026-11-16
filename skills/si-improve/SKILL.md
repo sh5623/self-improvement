@@ -64,9 +64,11 @@ measures nothing):
 Codify only when **both** are true:
 
 - **Generality**: you can **name two or more** recurrence sites (files, features, tasks). If you
-  cannot → record it in that task's local doc (spec, module README) and stop. If no local doc exists
-  yet, create one **following the documentation pattern already used next to that target** — do not
-  invent a new one.
+  cannot → do not globalize. Record it in that task's local doc (spec, module README) when it stays
+  true for the next person working there (a policy, a contract, an open decision), then stop. A
+  one-off slip already fixed in this unit of work needs no record. If no local doc exists yet, create
+  one **following the documentation pattern already used next to that target** — do not invent a
+  new one.
 - **Evidence**: at least one of a measurement, an execution log, a source `file:line`, or a
   reproduction. Without it → verify first, or park it as `needs verification`. **Never codify a guess.**
 
@@ -179,8 +181,10 @@ applied" applies to convention sentences too.)
   caught and the valid cases must not be. If even one case comes out ambiguous, fix the sentence
   before finalizing.
 - **For an expensive or contested convention**: 3+ subagent runs of the same scenario, plus **one
-  control run with no convention**. If the control does not reproduce the failure, the convention is
-  unnecessary — do not write it. If the three outputs disagree in shape, the wording is not binding
+  control run with no convention**. If the control does not reproduce the failure, do not write the
+  convention now. If an existing rule or tool demonstrably catches the case, it is a duplicate — drop
+  it. Otherwise park it as `needs verification` with the run results: one passing control does not
+  rule out an intermittent failure. If the three outputs disagree in shape, the wording is not binding
   — change the form before adding words (see the form matching above).
 
 ## 5. Propagate — fixing only the rule leaves the existing artifacts stale
@@ -221,9 +225,9 @@ BEGIN { inlog = (sec == "") }
 { t = ""; if (match($0, /^ ? ? ?(```+|~~~+)/)) { t = substr($0, RSTART, RLENGTH); sub(/^ +/, "", t) } }
 fence == "" && t != "" { fence = substr(t, 1, 1); flen = length(t); next }
 fence != "" { if (t != "" && substr(t, 1, 1) == fence && length(t) >= flen && substr($0, RSTART + RLENGTH) ~ /^[ \t]*$/) fence = ""; next }
-/^## / { inlog = (sec == "" || $0 ~ sec); next }
+/^## / { inlog = (sec == "" || $0 ~ sec); if (inlog) seen = 1; next }
 inlog && $0 ~ unit { n++ }
-END { print n + 0 }
+END { if (sec != "" && !seen) { print "not measured: no ## heading matches sec=" sec > "/dev/stderr"; exit 2 } print n + 0 }
 ' <datafile>
 ````
 
@@ -234,6 +238,11 @@ indentation, then 3 or more backticks or tildes; it closes only on the same char
 many, with nothing but spaces after), so an example heading inside a fence, a shorter or different
 inner fence, and a `### ` heading in another section are not counted. Plain `grep -c '^### '`
 over-counts all four of those cases.
+
+A matched section with no records prints 0. When `sec` is not empty and no `## ` heading outside a
+fence matches it, the command prints no number and exits 2 with `not measured` on stderr: the section
+name is wrong or has gone stale. Fix `sec` from the file's actual heading and count again; never
+record that result as 0.
 
 ## Reporting (required at the end of a unit of work)
 

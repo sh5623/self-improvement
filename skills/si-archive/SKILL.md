@@ -61,9 +61,9 @@ BEGIN { inlog = (sec == "") }
 { t = ""; if (match($0, /^ ? ? ?(```+|~~~+)/)) { t = substr($0, RSTART, RLENGTH); sub(/^ +/, "", t) } }
 fence == "" && t != "" { fence = substr(t, 1, 1); flen = length(t); next }
 fence != "" { if (t != "" && substr(t, 1, 1) == fence && length(t) >= flen && substr($0, RSTART + RLENGTH) ~ /^[ \t]*$/) fence = ""; next }
-/^## / { inlog = (sec == "" || $0 ~ sec); next }
+/^## / { inlog = (sec == "" || $0 ~ sec); if (inlog) seen = 1; next }
 inlog && $0 ~ unit { n++ }
-END { print n + 0 }
+END { if (sec != "" && !seen) { print "not measured: no ## heading matches sec=" sec > "/dev/stderr"; exit 2 } print n + 0 }
 ' <datafile>
 ````
 
@@ -72,6 +72,10 @@ closed only by the same character at the same length or longer), so example head
 shorter or different inner fence, and headings in other sections are not counted. Plain
 `grep -c '^### '` over-counts each of those. Over budget → that document goes to §2, and an over-cap
 log goes to §4.
+
+Exit 2 with `not measured` on stderr (no number) means `sec` is not empty and no `## ` heading outside
+a fence matches it. Fix `sec` from the file's actual heading before judging the cap. Never treat it as
+0: a 0 there would pass the cap check every time.
 
 **Trigger B — a dead or duplicated clause was named.** The caller asked for a cleanup pass, si-improve
 §2 classified a gap as "removal of a dead rule", or a specific clause was reported as living in two

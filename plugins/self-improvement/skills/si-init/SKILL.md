@@ -34,6 +34,11 @@ directly; report that the helper was not run.
   refusal by writing through a link into CLAUDE.md.
 - Inspect the reported format map and correct it to the real system's sections, log unit,
   budgets and archive. `none` is valid. Do not create missing tables just to satisfy defaults.
+- A corrected format line (`Format:` or `형식:`) survives every rerun while the data file stays
+  the same, with or without arguments. `--archive` rewrites the `Archive:` line; the map's
+  archive field follows only when it names the old path verbatim. Otherwise the result's
+  `warnings` says so: edit a descriptive archive field (a rule, a pointer) by hand. A different
+  `--data-file` re-infers the map and returns the old one in `previous_format`.
 
 Inspect the actual document terrain: tool configs and scripts; nested Codex instruction
 files; shared task/domain docs; Claude-only files as a separate runtime layer. On a new log,

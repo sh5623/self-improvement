@@ -5,6 +5,7 @@ from datetime import date
 import json
 import os
 from pathlib import Path
+import posixpath
 import re
 import stat
 import tempfile
@@ -12,6 +13,13 @@ import tempfile
 START = "<!-- self-improvement:codex:start -->"
 END = "<!-- self-improvement:codex:end -->"
 PLUGIN = Path(__file__).resolve().parents[1]
+# English and Korean labels are equivalent (references/data.md). The format line belongs to the
+# project and is preserved verbatim; the other lines of the marked block are rewritten by this tool.
+DATA_LINE = r"(?m)^(?:Data|데이터): `([^`]+)`"
+ARCHIVE_LINE = r"(?m)^(?:Archive|아카이브): `([^`]+)`"
+FORMAT_LINE = r"(?m)^(?:Format|형식):[ \t]*\S.*$"
+ARCHIVE_FIELD = re.compile(r"((?:^(?:Format|형식):|·)[ \t]*(?:[Aa]rchive|아카이브):[ \t]*)(.*?)(?=[ \t]+·|[ \t]*$)")
+NONE = {"none", "없음"}
 
 
 def read(path):
@@ -66,6 +74,28 @@ def section(text, words):
     return "none"
 
 
+def names_path(written, path):
+    """A format-map value names a path verbatim (optionally as inline code); none and 없음 are one value."""
+    return written in (path, "`" + path + "`") or (path == "none" and written in NONE)
+
+
+def retarget_archive(line, old, new):
+    """Return (format line, note). The archive field changes only when it names the old path verbatim."""
+    field = ARCHIVE_FIELD.search(line)
+    if not field:
+        return line, ("Format line has no archive field; Archive is now `" + new + "`. "
+                      "Add one if readers rely on the format map.")
+    written = field.group(2)
+    if not names_path(written, old):
+        return line, ("Format line's archive field was kept as written (" + written + "); Archive is now `"
+                      + new + "`. Edit it by hand if it describes the old destination.")
+    if new == "none":
+        value = "없음" if "아카이브" in field.group(1) else "none"
+    else:
+        value = "`" + new + "`" if written.startswith("`") else new
+    return line[:field.start(2)] + value + line[field.end(2):], None
+
+
 def discover(root, anchor_text, explicit):
     if explicit:
         chosen = inside(root, explicit)
@@ -74,7 +104,7 @@ def discover(root, anchor_text, explicit):
         return chosen
     marked = re.search(re.escape(START) + r"(.*?)" + re.escape(END), anchor_text, re.S)
     if marked:
-        found = re.search(r"(?m)^Data: `([^`]+)`", marked.group(1))
+        found = re.search(DATA_LINE, marked.group(1))
         if not found:
             raise ValueError("Existing Codex section has no Data path; repair the declaration")
         chosen = inside(root, found.group(1))
@@ -165,9 +195,12 @@ def initialize(root, data_file=None, archive=None, check=False):
     if any(c in name for c in "`\n\r"):
         raise ValueError("Data path cannot be represented in a Markdown registration")
     previous = re.search(re.escape(START) + r"(.*?)" + re.escape(END), original, re.S)
-    previous_archive = re.search(r"(?m)^Archive: `([^`]+)`", previous.group(1)) if previous else None
+    registration = previous.group(1) if previous else ""
+    previous_data = re.search(DATA_LINE, registration)
+    previous_archive = re.search(ARCHIVE_LINE, registration)
+    old_archive = previous_archive.group(1) if previous_archive else "none"
     archive_name = archive if archive is not None else (
-        previous_archive.group(1) if previous_archive else
+        old_archive if previous_archive else
         ("docs/conventions/archive/" if created else "none"))
     if archive_name != "none":
         inside(root, archive_name)
@@ -184,10 +217,21 @@ def initialize(root, data_file=None, archive=None, check=False):
     routing = section(data_text, ["§routing", "§라우팅"])
     log_unit = "### dated blocks" if re.search(r"(?m)^### 20\d\d-\d\d-\d\d", prose(data_text)) else "own format"
     format_line = f"Format: index: {index} · log unit: {log_unit} · routing: {routing} · archive: {archive_name}"
-    if previous and data_file is None and archive is None:
-        old_format = re.search(r"(?m)^Format: .+$", previous.group(1))
-        if old_format:
-            format_line = old_format.group(0)
+    # The project's format map survives as long as the data file is the same one, whatever the
+    # arguments; re-inference is only for a data file that actually changed.
+    old_format = re.search(FORMAT_LINE, registration)
+    same_data = bool(previous_data) and posixpath.normpath(previous_data.group(1)) == posixpath.normpath(name)
+    warnings, previous_format = [], None
+    if old_format and same_data:
+        format_line = old_format.group(0)
+        if archive_name != old_archive:
+            format_line, note = retarget_archive(format_line, old_archive, archive_name)
+            if note:
+                warnings.append(note)
+    elif old_format and old_format.group(0) != format_line:
+        previous_format = old_format.group(0)
+        warnings.append("Data file changed, so the format map was re-inferred from the new file; "
+                        "previous_format holds the old map. Carry over what still applies.")
     block = "\n".join([
         START, "## Self-improvement (Codex)",
         "When running in Codex, use $self-improvement:si-improve for recurring, evidenced convention gaps;",
@@ -203,7 +247,10 @@ def initialize(root, data_file=None, archive=None, check=False):
         updated = original + ("\n" if original.endswith("\n") else "\n\n" if original else "") + block + "\n"
     status = "created" if created else "unchanged" if updated == original else "registered"
     result = dict(status=status, check=check, data_file=name, anchor=anchor.name,
-                  archive=archive_name, format=format_line, existing_data_preserved=not created)
+                  archive=archive_name, format=format_line, existing_data_preserved=not created,
+                  warnings=warnings)
+    if previous_format:
+        result["previous_format"] = previous_format
     if check:
         return result
     if created:

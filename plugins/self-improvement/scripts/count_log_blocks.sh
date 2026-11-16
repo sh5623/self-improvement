@@ -16,14 +16,20 @@
 #                  latest '## ' heading matches. Default: '§(log|로그)'. Pass ''
 #                  to count the whole file (a data file with no '## ' headings).
 #
-# The awk program between BEGIN and END is copied verbatim into si-improve §5,
-# si-archive §0 and references/data.md; tests/test_compat.py fails if a copy drifts.
+# exit 0 + a number   the count. A matched section with no records prints 0.
+# exit 2, no number   not measured: section-regex is not empty and no '## '
+#                     heading outside a fence matches it (a wrong or stale
+#                     section name). Never read this as 0; fix the regex.
+#
+# The awk program from BEGIN through the END line is copied verbatim into the Claude
+# si-improve §6, si-archive §1 and references/data.md; tests/test_compat.py fails if a
+# copy drifts.
 awk -v unit="${2-^### }" -v sec="${3-§(log|로그)}" '
 BEGIN { inlog = (sec == "") }
 { t = ""; if (match($0, /^ ? ? ?(```+|~~~+)/)) { t = substr($0, RSTART, RLENGTH); sub(/^ +/, "", t) } }
 fence == "" && t != "" { fence = substr(t, 1, 1); flen = length(t); next }
 fence != "" { if (t != "" && substr(t, 1, 1) == fence && length(t) >= flen && substr($0, RSTART + RLENGTH) ~ /^[ \t]*$/) fence = ""; next }
-/^## / { inlog = (sec == "" || $0 ~ sec); next }
+/^## / { inlog = (sec == "" || $0 ~ sec); if (inlog) seen = 1; next }
 inlog && $0 ~ unit { n++ }
-END { print n + 0 }
+END { if (sec != "" && !seen) { print "not measured: no ## heading matches sec=" sec > "/dev/stderr"; exit 2 } print n + 0 }
 ' "$1"

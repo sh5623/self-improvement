@@ -52,15 +52,20 @@ after. Headings inside a fence, a shorter or different inner fence, and headings
 sections are not counted; plain `grep -c '^### '` over-counts all of those. Keep the index
 and migration history in the head file when rotating oldest bodies.
 
+A matched section with no records prints 0. When `sec` is not empty and no `## ` heading
+outside a fence matches it, the command prints no number and exits 2 with `not measured` on
+stderr: the section name is wrong or stale. Fix `sec` from the actual heading and count again;
+report the log as unmeasured until then, never as 0.
+
 ````sh
 awk -v unit='^### ' -v sec='§(log|로그)' '
 BEGIN { inlog = (sec == "") }
 { t = ""; if (match($0, /^ ? ? ?(```+|~~~+)/)) { t = substr($0, RSTART, RLENGTH); sub(/^ +/, "", t) } }
 fence == "" && t != "" { fence = substr(t, 1, 1); flen = length(t); next }
 fence != "" { if (t != "" && substr(t, 1, 1) == fence && length(t) >= flen && substr($0, RSTART + RLENGTH) ~ /^[ \t]*$/) fence = ""; next }
-/^## / { inlog = (sec == "" || $0 ~ sec); next }
+/^## / { inlog = (sec == "" || $0 ~ sec); if (inlog) seen = 1; next }
 inlog && $0 ~ unit { n++ }
-END { print n + 0 }
+END { if (sec != "" && !seen) { print "not measured: no ## heading matches sec=" sec > "/dev/stderr"; exit 2 } print n + 0 }
 ' <datafile>
 ````
 

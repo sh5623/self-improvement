@@ -207,6 +207,96 @@ class Initialization(unittest.TestCase):
         si.initialize(self.root)
         self.assertEqual(anchor.read_text(), text)
 
+    def registered(self, format_line, archive="old.md"):
+        """A registered project whose format line was corrected by hand, as si-init asks."""
+        si.initialize(self.root, archive=archive)
+        anchor = self.root / "AGENTS.md"
+        text = re.sub(r"(?m)^Format: .+$", lambda _: format_line, anchor.read_text())
+        anchor.write_text(text)
+        return anchor, text
+
+    def test_custom_format_survives_explicit_arguments(self):
+        line = "Format: index: none · log unit: dated headings · routing: docs/team-routes.md · archive: old.md"
+        anchor, text = self.registered(line)
+        data = si.initialize(self.root, check=True)["data_file"]
+        for kwargs in [{"archive": "old.md"}, {"data_file": data}, {"data_file": "./" + data, "archive": "old.md"}]:
+            with self.subTest(kwargs=kwargs):
+                result = si.initialize(self.root, **kwargs)
+                self.assertEqual(result["status"], "unchanged")
+                self.assertEqual(result["format"], line)
+                self.assertEqual(result["warnings"], [])
+                self.assertEqual(anchor.read_text(), text)
+
+    def test_archive_change_retargets_a_verbatim_field(self):
+        for written, expected in [("old.md", "new.md"), ("`old.md`", "`new.md`")]:
+            with self.subTest(written=written):
+                line = "Format: index: none · routing: docs/team-routes.md · archive: " + written + " · log unit: dated headings"
+                anchor, _ = self.registered(line)
+                result = si.initialize(self.root, archive="new.md")
+                self.assertEqual(result["format"], line.replace("archive: " + written, "archive: " + expected))
+                self.assertEqual(result["warnings"], [])
+                self.assertIn("Archive: `new.md`", anchor.read_text())
+                before = anchor.read_text()
+                self.assertEqual(si.initialize(self.root)["status"], "unchanged")
+                self.assertEqual(anchor.read_text(), before)
+                anchor.unlink()
+
+    def test_descriptive_archive_field_is_kept_and_reported(self):
+        line = ("Format: index: `## 색인` · log unit: `### YYYY-MM-DD — 제목` · routing: `docs/SELF-IMPROVEMENT.md` §2"
+                " · archive: 같은 디렉터리의 `*-ARCHIVE.md`. 앱/공통 로그 선택은 §6-0을 따른다.")
+        for kwargs in [{"archive": "docs/NEW-ARCHIVE.md"}, {"archive": "none"}]:
+            with self.subTest(kwargs=kwargs):
+                anchor, _ = self.registered(line)
+                result = si.initialize(self.root, check=True, **kwargs)
+                self.assertEqual(result["format"], line)
+                self.assertEqual(len(result["warnings"]), 1)
+                self.assertIn("kept as written", result["warnings"][0])
+                anchor.unlink()
+
+    def test_missing_archive_field_is_reported(self):
+        line = "Format: index: none · log unit: dated bullets · routing: docs/team.md"
+        self.registered(line)
+        result = si.initialize(self.root, archive="new.md", check=True)
+        self.assertEqual(result["format"], line)
+        self.assertIn("no archive field", result["warnings"][0])
+
+    def test_korean_format_line_survives_rerun(self):
+        line = "형식: 색인: 없음 · 로그 단위: 날짜 제목 · 라우팅: docs/team-routes.md · 아카이브: old.md"
+        anchor, text = self.registered(line)
+        result = si.initialize(self.root)
+        self.assertEqual(result["status"], "unchanged")
+        self.assertEqual(anchor.read_text(), text)
+        result = si.initialize(self.root, archive="new.md")
+        self.assertEqual(result["format"], line.replace("아카이브: old.md", "아카이브: new.md"))
+        self.assertEqual(result["warnings"], [])
+
+    def test_korean_none_archive_field_is_retargeted(self):
+        unset = "형식: 색인: 없음 · 라우팅: 없음 · 아카이브: 없음"
+        moved = "형식: 색인: 없음 · 라우팅: 없음 · 아카이브: history/old.md"
+        for line, archive, target, expected in [(unset, "none", "history/old.md", moved),
+                                                (moved, "history/old.md", "none", unset)]:
+            with self.subTest(target=target):
+                anchor, _ = self.registered(line, archive=archive)
+                result = si.initialize(self.root, archive=target, check=True)
+                self.assertEqual((result["format"], result["warnings"]), (expected, []))
+                anchor.unlink()
+
+    def test_korean_archive_label_keeps_its_value(self):
+        anchor, _ = self.registered("Format: index: none · archive: old.md")
+        anchor.write_text(anchor.read_text().replace("Archive: `old.md`", "아카이브: `old.md`"))
+        result = si.initialize(self.root, check=True)
+        self.assertEqual(result["archive"], "old.md")
+        self.assertEqual(result["format"], "Format: index: none · archive: old.md")
+
+    def test_changed_data_file_reports_previous_format(self):
+        line = "Format: index: none · log unit: dated headings · routing: docs/team-routes.md · archive: old.md"
+        self.registered(line)
+        self.put("docs/other/LOG.md", LEGACY)
+        result = si.initialize(self.root, data_file="docs/other/LOG.md", check=True)
+        self.assertEqual(result["previous_format"], line)
+        self.assertNotEqual(result["format"], line)
+        self.assertIn("re-inferred", result["warnings"][0])
+
     def test_schema_and_other_runtime_stamp_untouched(self):
         path = self.put("docs/conventions/CHANGELOG.md", "<!-- si-schema: v99 -->\n<!-- si-plugin: v9.0.0 -->\n" + LEGACY)
         before = path.read_bytes()
@@ -242,14 +332,21 @@ HEAD = "# log\n\n## §index\n\n| a | b |\n\n## §log\n\n### 2026-09-05 — real 
 EXAMPLE = "### 2026-01-01 — example heading inside a fence"
 
 
+def run_count(path, *args):
+    return subprocess.run(["sh", str(COUNT), str(path), *args], capture_output=True, text=True)
+
+
 def count(path, *args):
-    result = subprocess.run(["sh", str(COUNT), str(path), *args], capture_output=True, text=True, check=True)
+    result = run_count(path, *args)
+    if result.returncode != 0:
+        raise AssertionError(f"count exited {result.returncode}: {result.stderr.strip()}")
     return int(result.stdout.strip())
 
 
 def program(text):
-    """The awk body every copy must share, from BEGIN to END."""
-    match = re.search(r"BEGIN \{ inlog.*?END \{ print n \+ 0 \}", text, re.S)
+    """The awk body every copy must share: from BEGIN through the whole END line, so the
+    unmeasured-section exit sits inside the compared span."""
+    match = re.search(r"BEGIN \{ inlog.*?\nEND \{[^\n]*\}", text, re.S)
     return match.group(0) if match else None
 
 
@@ -311,9 +408,29 @@ class LogCount(unittest.TestCase):
         self.assertEqual(count(path, "^- ", "Log"), 2)
         self.assertEqual(count(path, "^- ", ""), 3)
 
+    def test_unmatched_section_is_not_measured(self):
+        path = self.root / "history.md"
+        for heading in ["## History", "## 로그", "## Notes\n\n```md\n## §log\n```"]:
+            path.write_text(f"# Data\n\n{heading}\n\n### 2026-11-01 a\n\n### 2026-11-02 b\n", encoding="utf-8")
+            for args in [(), ("^### ", "Histroy")]:
+                with self.subTest(heading=heading, args=args):
+                    result = run_count(path, *args)
+                    self.assertEqual(result.returncode, 2)
+                    self.assertEqual(result.stdout, "")
+                    self.assertIn("not measured", result.stderr)
+        self.assertEqual(count(path, "^### ", "^## Notes$"), 2)
+        self.assertEqual(count(path, "^### ", ""), 2)
+
+    def test_matched_section_without_records_is_zero(self):
+        path = self.root / "empty.md"
+        path.write_text("# Data\n\n## §log\n\n```md\n### 2026-01-01 example\n```\n", encoding="utf-8")
+        result = run_count(path)
+        self.assertEqual((result.returncode, result.stdout.strip()), (0, "0"))
+
     def test_documented_copies_match_the_script(self):
         canonical = program(COUNT.read_text())
         self.assertIsNotNone(canonical)
+        self.assertIn("exit 2", canonical)
         for doc in [PLUGIN / "references/data.md", CLAUDE / "skills/si-improve/SKILL.md",
                     CLAUDE / "skills/si-archive/SKILL.md"]:
             with self.subTest(doc=doc):

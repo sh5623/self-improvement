@@ -89,7 +89,10 @@ new file manually after inspection, then register it with `--data-file`.
 
 The helper preserves existing data bytes, updates only its marked Codex section, handles spaces,
 checks path containment, respects existing override files, preserves instruction mode, and checks
-for a changed instruction file before replacement. It does not inspect tool configuration, populate
+for a changed instruction file before replacement. While the data file stays the same it keeps the
+project's format line (`Format:` or `형식:`) even when arguments are passed, retargets the map's
+archive field only when it names the old path verbatim, and reports anything it left as written in
+`warnings`. It does not inspect tool configuration, populate
 the full routing terrain, evaluate rule quality, or run a cross-file transaction/lock. Complete
 terrain discovery through the skill. Concurrent sessions must coordinate shared record edits and
 reread before writing. Do not run competing initializations in the same project.
@@ -117,7 +120,7 @@ installing the plugin, changing user trust, sending a model turn, or publishing 
 
 Local validation used Codex CLI 0.153.4, Claude Code 2.1.261 and macOS. Automated fixtures cover
 data preservation, fresh setup, reruns, custom formats, ambiguous/missing paths, symlinks,
-override precedence, relocatable payloads, shell quoting and the fence-aware log count (indented fences, a different or shorter inner fence, headings outside the log section, and the documented copies matching `scripts/count_log_blocks.sh`). CI additionally configures these checks
+override precedence, relocatable payloads, shell quoting and the fence-aware log count (indented fences, a different or shorter inner fence, headings outside the log section, an unmatched section exiting 2 instead of counting 0, and the documented copies matching `scripts/count_log_blocks.sh`), and format-map preservation under arguments and Korean labels. CI additionally configures these checks
 on Linux/macOS with Python 3.9/3.13; configured coverage is not a claim those hosted jobs ran.
 
 These are structural and deterministic checks. End-to-end install/trust/compact behavior in the

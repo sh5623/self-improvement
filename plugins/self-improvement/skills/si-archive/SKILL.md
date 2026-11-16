@@ -43,7 +43,9 @@ to the top of the archive log. Keep the complete index and migration history in 
 Use the format map's real record unit and budget; default generated layout caps at 15. Measure
 with the fence-aware count in [data.md](../../references/data.md) (or
 `scripts/count_log_blocks.sh`), passing the map's unit and the log section's heading; a plain
-`grep -c` of headings over-counts fenced examples and other sections.
+`grep -c` of headings over-counts fenced examples and other sections. Exit 2 (`not measured`
+on stderr, no number) means no heading matched the section argument: fix it from the actual
+heading, and report the log as unmeasured rather than 0 until it counts.
 
 Reread shared files before applying edits. Check citations of moved rule names/sections;
 repair references or confirm the migration record resolves them. Remeasure affected files,
