@@ -33,6 +33,17 @@
 
 ### Claude Code
 
+권장: [guardrail](https://github.com/sh5623/guardrail) 통합 마켓으로 설치한다
+(fe-rail, self-improvement, parallel-worktree, e2e-rail을 마켓 하나로 받는다).
+
+```text
+/plugin marketplace add sh5623/guardrail
+/plugin install self-improvement@guardrail
+/reload-plugins
+```
+
+이 플러그인만 필요하면 이 저장소를 마켓으로 직접 추가해도 된다.
+
 ```text
 /plugin marketplace add sh5623/self-improvement
 /plugin install self-improvement@self-improvement
@@ -40,10 +51,10 @@
 ```
 
 Claude 설치 기본 범위는 user다. 프로젝트 한정 설치는 `--scope project`를 사용한다.
-업데이트: `/plugin marketplace update self-improvement` → `/reload-plugins` → 프로젝트에서
-`/self-improvement:si-init`. 같은 배포판의 Claude 템플릿 문구만 점검·보수하고 기존 이력은 보존한다.
-
-[guardrail](https://github.com/sh5623/guardrail) 통합 마켓 안내는 Claude 설치에 해당한다.
+업데이트: `/plugin marketplace update guardrail`(이 저장소를 직접 추가했다면 `self-improvement`) →
+`/reload-plugins` → 프로젝트에서 `/self-improvement:si-init`. 같은 배포판의 Claude 템플릿 문구만
+점검·보수하고 기존 이력은 보존한다.
+guardrail 통합 마켓은 Claude Code 전용이고, Codex는 아래처럼 이 저장소에서 직접 설치한다.
 
 ### Codex
 

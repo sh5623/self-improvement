@@ -24,6 +24,17 @@ Public v0.7.0 adds a separate Codex package alongside the Claude plugin.
 
 ### Claude Code
 
+Recommended: install from the [guardrail](https://github.com/sh5623/guardrail) aggregate marketplace
+(one marketplace for fe-rail, self-improvement, parallel-worktree and e2e-rail).
+
+```text
+/plugin marketplace add sh5623/guardrail
+/plugin install self-improvement@guardrail
+/reload-plugins
+```
+
+Installing straight from this repository also works if you only need this one plugin:
+
 ```text
 /plugin marketplace add sh5623/self-improvement
 /plugin install self-improvement@self-improvement
@@ -31,10 +42,10 @@ Public v0.7.0 adds a separate Codex package alongside the Claude plugin.
 ```
 
 Claude installs at user scope by default; use `--scope project` for a project-scoped install.
-To update: `/plugin marketplace update self-improvement`, `/reload-plugins`, then
-`/self-improvement:si-init` in existing projects. It checks same-edition Claude template wording
-while preserving project history. The [guardrail](https://github.com/sh5623/guardrail) aggregate
-marketplace is an alternative for Claude installation.
+To update: `/plugin marketplace update guardrail` (or `self-improvement` if you added this repository
+directly), `/reload-plugins`, then `/self-improvement:si-init` in existing projects. It checks
+same-edition Claude template wording while preserving project history.
+The guardrail marketplace applies to Claude Code only; Codex installs from this repository (below).
 
 ### Codex
 
